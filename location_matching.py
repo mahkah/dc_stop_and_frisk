@@ -11,13 +11,17 @@
 # Modified: 3/21/2018 (Initial Version)
 #####
 
+### Missing Blocks
+# 400 BLOCK OF 2ND STREET NW: (38.895470, -77.013673)
+
 
 import pandas as pd
 import re
+import json
 
 
 def main():
-    
+    '''Run the functions defined in this file on DC Stop and Frisk Data'''
     # From: https://mpdc.dc.gov/node/1310236
     sf1_df = pd.read_excel('SF_Field Contact_02202018.xlsx', 
                            names=('incident_type', 'incident_date', 'year', 'data_type', 
@@ -43,15 +47,24 @@ def main():
     sf_located['block_match'] = sf_located['block_match'].map(match_codes)
     print(sf_located['block_match'].value_counts(normalize=True))
     
+    # Export
     sf_located.to_csv('SF_Field Contact_02202018_locations.csv', index=False)
-
-
-
+    cols = ['ba_clean', 'block_address', 'block_id', 'block_match', 'cause',
+            'data_type', 'district', 'incident_date', 'incident_type', 
+            'original_index', 'psa', 'subject_age', 'subject_ethnicity', 
+            'subject_gender', 'subject_race', 'year']
+    geo_df = sf_located.loc[sf_located['block_id'] > 0]
+    geo_df['incident_date'] = geo_df['incident_date'].astype(str)
+    geojson = df_to_geojson(geo_df, cols, lat='Y', lon='X') 
+    output_filename = 'SF_Field Contact_02202018_locations.js'
+    with open(output_filename, 'w') as output_file:
+        output_file.write('var dataset = ')
+        json.dump(geojson, output_file, indent=2)
 
 
 
 def spell_check(address):
-    # Basic spell checking
+    '''Conduct basic spell checking'''
     spelling_counts = {'CAPTIOL': 'CAPITOL', 'CAPITAL': 'CAPITOL', 'ILINOI': 'ILLINOIS',
                    '/ SCAPITOL': 'SOUTH CAPITOL', "13'TH": '13TH', 'EAST CAP ST': 'EAST CAPITOL ST',
                    'E CAPITOL': 'EAST CAPITOL', 'MLK JR': 'MARTIN LUTHER KING JR', 
@@ -75,22 +88,19 @@ def spell_check(address):
 
 
 def fix_ending(address):
-    # Removes endings like ' WASHINGTON DC'
+    '''Remove endings like " WASHINGTON DC"'''
     if 'CAPITOL' not in address:
         m = re.match('^.* [NS][EW]$', address)
         if m is None:
             m = re.match('^(.* [NS][EW]) .*$', address)
             if m is not None:
                 return m.group(1)
-        
     return address
 
 
 
-
-
 def street_abriev(address):
-    # Standardize data to use full st type names
+    '''Standardize data to use full st type names'''
     abrievs = {'ALY': 'ALLEY',
            'AVE': 'AVENUE',
            'AV': 'AVENUE',
@@ -120,7 +130,6 @@ def street_abriev(address):
            'TR': 'TERRACE',
            'WALK': 'WALK',
            'WAY': 'WAY'}
-    
     for k, v in abrievs.items():
         m = re.match('^(.* )' + k + '( ?[SN]?[WE]?)$', address)
         if m:
@@ -130,6 +139,7 @@ def street_abriev(address):
 
 
 def internal_street_abriev(address):
+    '''Standardize corner addresses to use full st type names'''
     abrievs = {'ALY': 'ALLEY',
            'AVE': 'AVENUE',
            'AV': 'AVENUE',
@@ -159,7 +169,6 @@ def internal_street_abriev(address):
            'TR': 'TERRACE',
            'WALK': 'WALK',
            'WAY': 'WAY'}
-    
     if re.match('^(.*) [&/] (.*)$', address):
        for k, v in abrievs.items():
            m = re.match('^(.* )' + k + '( ?[SN]?[WE]? [&/] .+)$', address)
@@ -169,16 +178,13 @@ def internal_street_abriev(address):
 
 
 
-
-
 def clean_address(address):
-    # Cleans up special cases
+    '''Clean up special cases'''
     
     ### Deletions
     deletions = ['(.* [0-9]TH)S( .*)$', '(.*)\.( [NS][WE])$', '(.* BLOCK OF) .* [NS][WE] /( .*[NS][WE])$', 
              '(.* BLOCK OF )OF (.*[NS][WE])$', '(.* BLOCK OF )BLOCK OF (.*[NS][WE])$', 
              '(.* BLOCK OF )BLK OF (.*[NS][WE])$', '(.* BLOCK OF )BLOCK (.*[NS][WE])$']
-    
     for i in deletions:
         m = re.match(i, address)
         if m: 
@@ -254,12 +260,14 @@ def clean_address(address):
 
 
 def block_finder(address, block_df):
-    # Finds the pseudo block id of each block. Negative numbers designate various match failures
-    
+    '''Find the pseudo block id of each block. Negative numbers designate 
+    various match failures
+    '''
     if address == '' or address=='nan':
         return -1
     if address == 'Multiple/Unknown Address':
         return -2
+    
     # Block of address type
     m = re.match('^([0-9]+) BLOCK OF (.*)$', address)
     if m:
@@ -270,7 +278,6 @@ def block_finder(address, block_df):
                                      'PSEUDO_OBJECTID'].values
         if len(block_id) > 0:
             return block_id[0]
-
         # Try making street number fuzzy
         st_num = st_num + 5
         block_id = block_df.loc[(block_df['ONSTREETDISPLAY'] == m.group(2)) & 
@@ -279,7 +286,6 @@ def block_finder(address, block_df):
                                  'PSEUDO_OBJECTID'].values
         if len(block_id) > 0:
             return block_id[0]
-        
         st_num = st_num - 10
         block_id = block_df.loc[(block_df['ONSTREETDISPLAY'] == m.group(2)) & 
                                  (block_df['LOWER_RANGE'] <= st_num) & 
@@ -287,8 +293,8 @@ def block_finder(address, block_df):
                                  'PSEUDO_OBJECTID'].values
         if len(block_id) > 0:
             return block_id[0]
-        
         return -3
+    
     # Corner address type
     m = re.match('^(.*) [&/] (.*)$', address)
     if m:
@@ -302,15 +308,14 @@ def block_finder(address, block_df):
             return block_id[0]
         else:
             return -4
-    
     return -5
 
 
 
 def find_blocks(df_sf, addres_col, block_df, details=False):
-    # Runs clean up and matching functions, assesses match, and gets useful 
-    # columns from the block dataset
-    
+    '''Run clean up and matching functions, assess match, and get useful 
+    columns from the block dataset
+    '''
     ### Clean up and find block id's
     df = df_sf
     df['ba_clean'] = df[addres_col].str.replace(' B/O ', ' BLOCK OF ')
@@ -331,9 +336,6 @@ def find_blocks(df_sf, addres_col, block_df, details=False):
     unclassified_bo = len(df.loc[df['block_id']==-3, addres_col])
     total_bo = df[addres_col].str.count('^([0-9]+) BLOCK OF (.*)$').sum() + df[addres_col].str.count('^([0-9]+) B/O (.*)$').sum()
     print('Block of pattern: ' + str((total_bo-unclassified_bo)/total_bo))
-    # 99.1460 Benchmark
-    ## Missing Blocks
-    # 400 BLOCK OF 2ND STREET NW: (38.895470, -77.013673)
     
     # CORNER Pattern
     if details == True:
@@ -341,35 +343,31 @@ def find_blocks(df_sf, addres_col, block_df, details=False):
     unclassified_bo = len(df.loc[df['block_id']==-4, addres_col])
     total_bo = df[addres_col].str.count('^(.*) [/&] (.*)$').sum()
     print('Corner pattern: ' + str((total_bo-unclassified_bo)/total_bo))
-    #  Benchmark
     
     # Other Pattern
     if details == True:
         print(df.loc[df['block_id']==-5, 'ba_clean'].value_counts())
-    
     
     ### Join with block data
     return df.join(block_df[['X', 'Y']], on='block_id')
 
 
 
-
-
-# Debugging Tools
-#sf2_df.loc[sf2_df['ba_clean']=='UNIT BLOCK OF NE & H STREET NE', 'Block address'].value_counts()
-#a = 'CANAL STREET SW'
-#b = 'P STREET SW'
-#block_id = block_df.loc[
-#                ((block_df['ONSTREETDISPLAY'] == a) & (block_df['FROMSTREETDISPLAY'] == b)) | 
-#                ((block_df['ONSTREETDISPLAY'] == b) & (block_df['FROMSTREETDISPLAY'] == a)) |
-#                ((block_df['ONSTREETDISPLAY'] == a) & (block_df['TOSTREETDISPLAY'] == b)) |
-#                ((block_df['ONSTREETDISPLAY'] == b) & (block_df['TOSTREETDISPLAY'] == a)), 
-#                'PSEUDO_OBJECTID'].values
-
-
-
+def df_to_geojson(df, properties, lat='latitude', lon='longitude'):
+    '''Write a dataframe to a geojson format
+    Retrieved from Geoff Boeing: http://geoffboeing.com/2015/10/exporting-python-data-geojson/
+    '''
+    geojson = {'type':'FeatureCollection', 'features':[]}
+    for _, row in df.iterrows():
+        feature = {'type':'Feature',
+                   'properties':{},
+                   'geometry':{'type':'Point',
+                               'coordinates':[]}}
+        feature['geometry']['coordinates'] = [row[lon],row[lat]]
+        for prop in properties:
+            feature['properties'][prop] = row[prop]
+        geojson['features'].append(feature)
+    return geojson
 
 
 if __name__ == '__main__': main()
-
-
