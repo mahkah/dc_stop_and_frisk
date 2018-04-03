@@ -15,9 +15,12 @@
 # 400 BLOCK OF 2ND STREET NW: (38.895470, -77.013673)
 
 
+
+import numpy as np
 import pandas as pd
 import re
 import json
+
 
 
 def main():
@@ -47,16 +50,25 @@ def main():
     sf_located['block_match'] = sf_located['block_match'].map(match_codes)
     print(sf_located['block_match'].value_counts(normalize=True))
     
-    # Export
     sf_located.to_csv('SF_Field Contact_02202018_locations.csv', index=False)
-    cols = ['ba_clean', 'block_address', 'block_id', 'block_match', 'cause',
-            'data_type', 'district', 'incident_date', 'incident_type', 
-            'original_index', 'psa', 'subject_age', 'subject_ethnicity', 
-            'subject_gender', 'subject_race', 'year']
+    
+    # Json export
     geo_df = sf_located.loc[sf_located['block_id'] > 0]
-    geo_df['incident_date'] = geo_df['incident_date'].astype(str)
+    
+    geo_df['incident_date'] = pd.to_datetime(geo_df['incident_date'])
+    geo_df['month'] = geo_df['incident_date'].dt.month
+    geo_df['day'] = geo_df['incident_date'].dt.day
+    geo_df['hour'] = geo_df['incident_date'].dt.hour
+    
+    cols = list(geo_df)
+    cols.remove('X')
+    cols.remove('Y')
+    cols.remove('incident_date')
+    for col in cols:
+        geo_df[col] = geo_df[col].replace(np.nan, '', regex=True)
+    
     geojson = df_to_geojson(geo_df, cols, lat='Y', lon='X') 
-    output_filename = 'SF_Field Contact_02202018_locations.js'
+    output_filename = 'SF_Field Contact_02202018_locations.geojson'
     with open(output_filename, 'w') as output_file:
         output_file.write('var dataset = ')
         json.dump(geojson, output_file, indent=2)
@@ -78,7 +90,6 @@ def spell_check(address):
                    '7TH T': '7TH STREET', 'NEW YORK AVENE NE': 'NEW YORK AVENUE NE',
                    'ST;NW': 'ST NW', '13 TH': '13TH', 'N CAP ST': 'NORTH CAPITOL ST', 
                    'ECAPITAL ST': 'EAST CAPITOL ST'}
-    
     for k, v in spelling_counts.items():
         m = re.match('^(.* )' + k + '(.*)$', address)
         if m:
