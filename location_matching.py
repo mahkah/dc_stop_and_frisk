@@ -5,10 +5,11 @@
 # Description:
 # Match police reported locations of stop and frisks to the DC Government's 
 # block dataset to find longitude and latitude values for each incident. 
-# Currently matches 91% of incidents (~30,000 in total). Of the remaining 
-# incidents, 70% have missing or incomplete addresses.
+# Currently matches 92% of incidents (>30,000 in total). Of the remaining 
+# incidents, >70% have missing or incomplete addresses.
 #
-# Modified: 3/21/2018 (Initial Version)
+# Modified: 4/7/2018 (Export Format Updates)
+# 3/21/2018 (Initial Version)
 #####
 
 ### Missing Blocks
@@ -25,6 +26,7 @@ import json
 
 def main():
     '''Run the functions defined in this file on DC Stop and Frisk Data'''
+    # Read Data
     # From: https://mpdc.dc.gov/node/1310236
     sf1_df = pd.read_excel('SF_Field Contact_02202018.xlsx', 
                            names=('incident_type', 'incident_date', 'year', 'data_type', 
@@ -41,6 +43,8 @@ def main():
     block_df = pd.read_excel('Block_Centroids.xlsx')
     block_df.set_index('PSEUDO_OBJECTID', inplace=True, drop=False)
     
+    
+    # Geocode Incidents
     sf1_df = find_blocks(sf1_df, 'block_address', block_df, details=True)
     sf2_df = find_blocks(sf2_df, 'block_address', block_df, details=True)
     sf_located = sf1_df.append(sf2_df, ignore_index=True)
@@ -50,27 +54,36 @@ def main():
     sf_located['block_match'] = sf_located['block_match'].map(match_codes)
     print(sf_located['block_match'].value_counts(normalize=True))
     
-    sf_located.to_csv('SF_Field Contact_02202018_locations.csv', index=False)
     
-    # Json export
-    geo_df = sf_located.loc[sf_located['block_id'] > 0]
+    # Recoding
+    sf_located['subject_race_ethn'] = sf_located['subject_race']
+    sf_located.loc[sf_located['subject_ethnicity'] == 'Hispanic Or Latino', 'subject_race_ethn'] = 'Hispanic or Latino'
+    recode_dict = {'Asian': 'Other', 'American Indian Or Alaska Native': 'Other', 'Native Hawaiian Or Other Pacific Islander': 'Other'}
+    sf_located['subject_race_ethn'].replace(recode_dict, inplace=True)
     
-    geo_df['incident_date'] = pd.to_datetime(geo_df['incident_date'])
-    geo_df['month'] = geo_df['incident_date'].dt.month
-    geo_df['day'] = geo_df['incident_date'].dt.day
-    geo_df['hour'] = geo_df['incident_date'].dt.hour
+    sf_located['incident_date'] = pd.to_datetime(sf_located['incident_date'])
+    sf_located['month'] = sf_located['incident_date'].dt.month
+    sf_located['day'] = sf_located['incident_date'].dt.day
+    sf_located['hour'] = sf_located['incident_date'].dt.hour
     
-    cols = list(geo_df)
+    cols = list(sf_located)
     cols.remove('X')
     cols.remove('Y')
     cols.remove('incident_date')
     for col in cols:
-        geo_df[col] = geo_df[col].replace(np.nan, '', regex=True)
+        sf_located[col] = sf_located[col].replace(np.nan, 'Unknown', regex=True)
+        sf_located[col] = sf_located[col].replace('', 'Unknown', regex=True)
     
+    
+    # Export
+    sf_located.to_csv('SF_Field Contact_02202018_locations.csv', index=False)
+    
+    geo_df = sf_located.loc[sf_located['block_id'] > 0]
+
     geojson = df_to_geojson(geo_df, cols, lat='Y', lon='X') 
-    output_filename = 'SF_Field Contact_02202018_locations.geojson'
+    output_filename = 'SF_Field_Contact_02202018_locations.geojson'
     with open(output_filename, 'w') as output_file:
-        output_file.write('var dataset = ')
+        output_file.write('')
         json.dump(geojson, output_file, indent=2)
 
 
@@ -89,7 +102,7 @@ def spell_check(address):
                    'NORTH CAPITOL NE': 'NORTH CAPITOL STREET', '19THST': '19TH STREET',
                    '7TH T': '7TH STREET', 'NEW YORK AVENE NE': 'NEW YORK AVENUE NE',
                    'ST;NW': 'ST NW', '13 TH': '13TH', 'N CAP ST': 'NORTH CAPITOL ST', 
-                   'ECAPITAL ST': 'EAST CAPITOL ST'}
+                   'ECAPITAL ST': 'EAST CAPITOL ST', 'BLK OF': 'BLOCK OF', 'BLK': 'BLOCK OF'}
     for k, v in spelling_counts.items():
         m = re.match('^(.* )' + k + '(.*)$', address)
         if m:
@@ -249,7 +262,12 @@ def clean_address(address):
                 address = m.group(1) + quad2 + ' & ' + m.group(2)
             elif quad1 != '' and quad2 == '':
                 address = m.group(1) + ' & ' + m.group(2) + quad1
-
+    
+    ### Unit Blocks
+    m = re.match('^UNIT (BLOCK OF.*)$', address)
+    if m:
+        address = '0 ' + m.group(1)
+    
     ### Spot Fixes
     # Fixing Benning Road SE Block
     if address == '4500 BLOCK OF BENNING ROAD SE':

@@ -1,0 +1,367 @@
+<head>
+  <meta charset='utf-8' />
+   <title>DC Stop and Frisks</title>
+   <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+   <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+   <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+
+   <style>
+     body {
+       margin: 0;
+       padding: 0;
+       font-family: 'Helvetica Neue', Helvetica, Arial, Sans-serif;
+     }
+
+     #map {
+       position: absolute;
+       top: 0;
+       bottom: 0;
+       width: 100%;
+     }
+   </style>
+</head>
+
+<body>
+  <style>
+    h1 {
+      font-size: 20px;
+      line-height: 30px;
+    }
+
+    h2 {
+      font-size: 18px;
+      line-height: 26px;
+    }
+    h3 {
+      font-size: 14px;
+      line-height: 20px;
+      margin-bottom: 10px;
+    }
+    a {
+      text-decoration: none;
+      color: #2dc4b2;
+    }
+    #console {
+      position: absolute;
+      width: 240px;
+      margin: 10px;
+      padding: 10px 20px;
+      background-color: white;
+    }
+    .map-overlay {
+     position: absolute;
+     bottom: 0;
+     right: 0;
+     background: rgba(255, 255, 255, 0.8);
+     margin-right: 20px;
+     font-family: Arial, sans-serif;
+     overflow: auto;
+     border-radius: 3px;
+   }
+
+   #legend {
+     padding: 10px;
+     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+     line-height: 18px;
+     height: 130px;
+     margin-bottom: 40px;
+     width: 250px;
+   }
+   .legend-key {
+     display: inline-block;
+     border-radius: 20%;
+     width: 10px;
+     height: 10px;
+     margin-right: 5px;
+   }
+
+   #menu {
+      background: #fff;
+      position: absolute;
+      z-index: 1;
+      top: 10px;
+      right: 10px;
+      border-radius: 3px;
+      width: 120px;
+      border: 1px solid rgba(0,0,0,0.4);
+      font-family: 'Open Sans', sans-serif;
+    }
+    #menu a {
+      font-size: 13px;
+      color: #404040;
+      display: block;
+      margin: 0;
+      padding: 0;
+      padding: 10px;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(0,0,0,0.25);
+      text-align: center;
+    }
+    #menu a:last-child {
+      border: none;
+    }
+    #menu a:hover {
+      background-color: #f8f8f8;
+      color: #404040;
+    }
+    #menu a.active {
+      background-color: #3887be;
+      color: #ffffff;
+    }
+    #menu a.active:hover {
+      background: #3074a4;
+    }
+  </style>
+
+  <div id='map'></div>
+  <nav id='menu'></nav>
+  <div id='console'>
+    <h1>Stop and Frisks</h1>
+    <p>Data: <a href='https://mpdc.dc.gov/node/1310236'>Stop and frisk incidents</a> in Washington DC, 2010-2016</p>
+
+    <h2>Filters</h2>
+    <div class='session' id='sliderbar'>
+      <h3>Hour: <label id='active-hour'>All Times</label></h3>
+      <button class='btn' id='all_time_btn'>All Times</button>
+      <input id='time_slider' class='row' type='range' min='0' max='23' step='1' value='22'/>
+    </div>
+    <div class='session'>
+      <h3>Ethnicity</h3>
+      <div class='row' id='ethn_filters'>
+        <input id='all' type='radio' name='toggle' value='all' checked='checked'>
+        <label for='all'>All</label>
+        <input id='hisp' type='radio' name='toggle' value='hisp'>
+        <label for='hisp'>Hispanic or Latino</label>
+        <br>
+        <input id='nonhisp' type='radio' name='toggle' value='nonhisp'>
+        <label for='nonhisp'>Not Hispanic or Latino</label>
+      </div>
+    </div>
+    <h2>Info</h2>
+    <div id='pd'><p>Hover over an incident for more information.</p></div>
+  </div>
+
+  <div class='map-overlay' id='legend'></div>
+
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoibWFoa2FoIiwiYSI6ImNqZW9zNHBvaTBhc2YzM2x0OWg3aXZ5dTAifQ.F1uwBes6jRJHdwqeSMiA-w';
+
+    // Load map
+    var map = new mapboxgl.Map({
+      container: 'map', // container element id
+      style: 'mapbox://styles/mapbox/light-v9',
+      center: [-77.030034, 38.901863], // initial map center in [lon, lat]
+      zoom: 11
+    });
+
+
+
+    // Plot incident points
+    map.on('load', function() {
+      var filter_hour = ['!=', ['number', ['get', 'hour']], 25];
+      var filter_ethn = ['!=', ['string', ['get', 'subject_ethnicity']], 'placeholder'];
+
+      // Dataset
+      map.addSource('sfs', {
+        type: 'geojson',
+        data: './SF_Field_Contact_02202018_locations.geojson'
+      });
+
+      // Layer for Individual Incidents
+      map.addLayer({
+        id: 'Individual Incidents',
+        type: 'circle',
+        source: 'sfs',
+        paint: {
+          'circle-color': [
+            'match',
+            ['get', 'subject_race'],
+            'White', '#fbb03b',
+            'Black', '#223b53',
+            'Asian', '#3bb2d0',
+            'American Indian Or Alaska Native', '#3bb2d0',
+            'Native Hawaiian Or Other Pacific Islander', '#3bb2d0',
+            'Unknown', '#111111',
+            /* other */ '#111111'
+          ],
+          'circle-opacity': 0.3
+        },
+        filter: ['all', filter_hour, filter_ethn]
+      }, 'admin-2-boundaries-dispute');
+      map.setLayoutProperty('Individual Incidents', 'visibility', 'none')
+
+      // Layer for heatmap
+      map.addLayer({
+        'id': 'Incident Heatmap',
+        'type': 'heatmap',
+        'source': 'sfs',
+        'paint': {
+            // Increase the heatmap color weight weight by zoom level
+            // heatmap-intensity is a multiplier on top of heatmap-weight
+            'heatmap-intensity': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                0, .1,
+                15, .5
+            ],
+            // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+            // Begin color ramp at 0-stop with a 0-transparancy color
+            // to create a blur-like effect.
+            'heatmap-color': [
+                'interpolate',
+                ['linear'],
+                ['heatmap-density'],
+                0, 'rgba(253,231,37,0)',
+                0.05, 'rgb(253,231,37)',
+                0.10, 'rgb(220,228,23)',
+                0.15, 'rgb(184,222,41)',
+                0.20, 'rgb(147,216,64)',
+                0.25, 'rgb(116,208,85)',
+                0.30, 'rgb(85,198,102)',
+                0.35, 'rgb(60,188,117)',
+                0.40, 'rgb(41,175,127)',
+                0.45, 'rgb(33,163,134)',
+                0.50, 'rgb(32,150,139)',
+                0.55, 'rgb(35,137,141)',
+                0.60, 'rgb(40,124,142)',
+                0.65, 'rgb(45,112,142)',
+                0.70, 'rgb(50,99,142)',
+                0.75, 'rgb(57,84,140)',
+                0.80, 'rgb(63,71,136)',
+                0.85, 'rgb(69,55,129)',
+                0.90, 'rgb(72,39,119)',
+                0.95, 'rgb(72,21,104)',
+                1, 'rgb(68,13,83)'
+            ],
+            // Adjust the heatmap radius by zoom level
+            'heatmap-radius': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                12, 5,
+                25, 180
+            ],
+            // Transition from heatmap to circle layer by zoom level
+            'heatmap-opacity': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                7, .9,
+                13, 0.7
+            ]
+        }
+    }, 'waterway-label');
+    map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
+
+
+
+      // Hour Slider
+      document.getElementById('time_slider').addEventListener('input', function(e) {
+        var hour = parseInt(e.target.value);
+
+        filter_hour = ['==', ['number', ['get', 'hour']], hour];
+        map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
+        map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
+
+        var ampm = hour >= 12 ? 'PM' : 'AM';
+        var hour12 = hour % 12 ? hour % 12 : 12;
+        document.getElementById('active-hour').innerText = hour12 + ampm;
+      });
+      document.getElementById('all_time_btn').addEventListener('click', function(e) {
+        filter_hour = ['!=', ['number', ['get', 'hour']], 25];
+        map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
+        map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
+
+        document.getElementById('active-hour').innerText = 'All Times';
+      });
+
+      // Ethnicity Filter
+      document.getElementById('ethn_filters').addEventListener('change', function(e) {
+        var ethn = e.target.value;
+
+        if (ethn === 'all') {
+          filter_ethn = ['!=', ['string', ['get', 'subject_ethnicity']], 'placeholder'];
+        } else if (ethn === 'hisp') {
+          filter_ethn = ['match', ['get', 'subject_ethnicity'], 'Hispanic Or Latino', true, false];
+        } else if (ethn === 'nonhisp') {
+          filter_ethn = ['match', ['get', 'subject_ethnicity'], 'Not Hispanic Or Latino', true, false];
+        } else {
+          console.log('error');
+        }
+        map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
+        map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
+      });
+
+      // Build Legend
+      var layers = ['White', 'Black', 'Asian', 'American Indian/Alaska Native', 'Native Hawaiian/Other Pacific Islander', 'Unknown'];
+      var colors = ['#fbb03b', '#223b53', '#3bb2d0', '#3bb2d0', '#3bb2d0', '#111111'];
+      for (i = 0; i < layers.length; i++) {
+        var layer = layers[i];
+        var color = colors[i];
+        var item = document.createElement('div');
+        var key = document.createElement('span');
+        key.className = 'legend-key';
+        key.style.backgroundColor = color;
+
+        var value = document.createElement('span');
+        value.innerHTML = layer;
+        item.appendChild(key);
+        item.appendChild(value);
+        legend.appendChild(item);
+      }
+    });
+
+    // Tooltip
+    map.on('mousemove', function(e) {
+      var incident = map.queryRenderedFeatures(e.point, {
+        layers: ['Individual Incidents']
+      });
+
+      if (incident.length > 0) {
+        document.getElementById('pd').innerHTML = '<h3><strong>' + incident[0].properties.subject_gender + '</strong></h3>';
+      } else {
+        document.getElementById('pd').innerHTML = '<p>Hover over an incident for more information.</p>';
+      }
+    });
+
+    // Layer Selection
+    var toggleableLayerIds = ['Individual Incidents', 'Incident Heatmap']
+    var defaultLayerIds = ['Incident Heatmap']
+
+    for (var i = 0; i < toggleableLayerIds.length; i++) {
+        var id = toggleableLayerIds[i];
+
+        var link = document.createElement('a');
+        link.href = '#';
+        if (defaultLayerIds.indexOf(id) >= 0){
+          link.className = 'active';
+        } else {
+          link.className = '';
+        }
+        link.textContent = id;
+
+        link.onclick = function (e) {
+            var clickedLayer = this.textContent;
+            e.preventDefault();
+            e.stopPropagation();
+
+            var visibility = map.getLayoutProperty(clickedLayer, 'visibility');
+
+            if (visibility === 'visible') {
+                map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+                this.className = '';
+            } else {
+                this.className = 'active';
+                map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+            }
+        };
+
+        var layers = document.getElementById('menu');
+        layers.appendChild(link);
+    }
+
+
+  </script>
+</body>
