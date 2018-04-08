@@ -120,22 +120,25 @@
     <p>Data: <a href='https://mpdc.dc.gov/node/1310236'>Stop and frisk incidents</a> in Washington DC, 2010-2016</p>
 
     <h2>Filters</h2>
+    <div class='session'>
+      <h3>Race/Ethnicity</h3>
+      <div class='row' id='ethn_filters'>
+        <input id='all' type='radio' name='toggle' value='all' checked='checked'>
+        <label for='all'>All</label>
+        <input id='black' type='radio' name='toggle' value='black'>
+        <label for='black'>Black</label>
+        <input id='white' type='radio' name='toggle' value='white'>
+        <label for='white'>White</label>
+        <input id='hisp' type='radio' name='toggle' value='hisp'>
+        <label for='hisp'>Hispanic or Latino</label>
+        <input id='other' type='radio' name='toggle' value='other'>
+        <label for='other'>Other</label>
+      </div>
+    </div>
     <div class='session' id='sliderbar'>
       <h3>Hour: <label id='active-hour'>All Times</label></h3>
       <button class='btn' id='all_time_btn'>All Times</button>
       <input id='time_slider' class='row' type='range' min='0' max='23' step='1' value='22'/>
-    </div>
-    <div class='session'>
-      <h3>Ethnicity</h3>
-      <div class='row' id='ethn_filters'>
-        <input id='all' type='radio' name='toggle' value='all' checked='checked'>
-        <label for='all'>All</label>
-        <input id='hisp' type='radio' name='toggle' value='hisp'>
-        <label for='hisp'>Hispanic or Latino</label>
-        <br>
-        <input id='nonhisp' type='radio' name='toggle' value='nonhisp'>
-        <label for='nonhisp'>Not Hispanic or Latino</label>
-      </div>
     </div>
     <h2>Info</h2>
     <div id='pd'><p>Hover over an incident for more information.</p></div>
@@ -160,12 +163,12 @@
     // Plot incident points
     map.on('load', function() {
       var filter_hour = ['!=', ['number', ['get', 'hour']], 25];
-      var filter_ethn = ['!=', ['string', ['get', 'subject_ethnicity']], 'placeholder'];
+      var filter_ethn = ['!=', ['string', ['get', 'subject_race_ethn']], 'placeholder'];
 
       // Dataset
       map.addSource('sfs', {
         type: 'geojson',
-        data: './SF_Field_Contact_02202018_locations.geojson'
+        data: 'https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/SF_Field_Contact_02202018_locations.geojson'
       });
 
       // Layer for Individual Incidents
@@ -282,11 +285,15 @@
         var ethn = e.target.value;
 
         if (ethn === 'all') {
-          filter_ethn = ['!=', ['string', ['get', 'subject_ethnicity']], 'placeholder'];
+          filter_ethn = ['!=', ['string', ['get', 'subject_race_ethn']], 'placeholder'];
+        } else if (ethn === 'black') {
+          filter_ethn = ['match', ['get', 'subject_race'], 'Black', true, false];
+        } else if (ethn === 'white') {
+          filter_ethn = ['match', ['get', 'subject_race'], 'White', true, false];
         } else if (ethn === 'hisp') {
           filter_ethn = ['match', ['get', 'subject_ethnicity'], 'Hispanic Or Latino', true, false];
-        } else if (ethn === 'nonhisp') {
-          filter_ethn = ['match', ['get', 'subject_ethnicity'], 'Not Hispanic Or Latino', true, false];
+        } else if (ethn === 'other') {
+          filter_ethn = ['match', ['get', 'subject_race_ethn'], 'Other', true, false];
         } else {
           console.log('error');
         }
