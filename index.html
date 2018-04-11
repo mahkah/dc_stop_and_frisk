@@ -3,6 +3,7 @@
    <title>DC Stop and Frisks</title>
    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
    <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+   <script src='https://api.mapbox.com/mapbox.js/plugins/turf/v3.0.11/turf.min.js'></script>
    <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
 
    <style>
@@ -191,7 +192,8 @@
           'circle-opacity': 0.3
         },
         filter: ['all', filter_hour, filter_ethn]
-      }, 'admin-2-boundaries-dispute');
+        }, 'admin-2-boundaries-dispute'
+      );
       map.setLayoutProperty('Individual Incidents', 'visibility', 'none')
 
       // Layer for heatmap
@@ -258,116 +260,132 @@
     }, 'waterway-label');
     map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
 
+    // Layer for Police Service Areas
+    map.addLayer({
+        id: 'Police Service Areas',
+        type: 'fill',
+        source: {
+          type: 'vector',
+          url: 'mapbox://mahkah.dqwaa7qg' // Your Mapbox tileset Map ID
+        },
+        'source-layer': 'Police_Service_Areas-as39av' // name of tilesets
+    });
+    map.setLayoutProperty('Police Service Areas', 'visibility', 'none')
 
 
-      // Hour Slider
-      document.getElementById('time_slider').addEventListener('input', function(e) {
-        var hour = parseInt(e.target.value);
+    var psas = document.getElementById('Police Service Areas');
+    //map.setPaintProperty('Police Service Areas'.value, 'fill-color', color);
+    // Add psas as a column to geojson, interate through each psa and count?
+    // How to filter dataset?
 
-        filter_hour = ['==', ['number', ['get', 'hour']], hour];
-        map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
-        map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
+    // Hour Slider
+    document.getElementById('time_slider').addEventListener('input', function(e) {
+      var hour = parseInt(e.target.value);
 
-        var ampm = hour >= 12 ? 'PM' : 'AM';
-        var hour12 = hour % 12 ? hour % 12 : 12;
-        document.getElementById('active-hour').innerText = hour12 + ampm;
-      });
-      document.getElementById('all_time_btn').addEventListener('click', function(e) {
-        filter_hour = ['!=', ['number', ['get', 'hour']], 25];
-        map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
-        map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
+      filter_hour = ['==', ['number', ['get', 'hour']], hour];
+      map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
+      map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
 
-        document.getElementById('active-hour').innerText = 'All Times';
-      });
+      var ampm = hour >= 12 ? 'PM' : 'AM';
+      var hour12 = hour % 12 ? hour % 12 : 12;
+      document.getElementById('active-hour').innerText = hour12 + ampm;
+    });
+    document.getElementById('all_time_btn').addEventListener('click', function(e) {
+      filter_hour = ['!=', ['number', ['get', 'hour']], 25];
+      map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
+      map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
 
-      // Ethnicity Filter
-      document.getElementById('ethn_filters').addEventListener('change', function(e) {
-        var ethn = e.target.value;
-
-        if (ethn === 'all') {
-          filter_ethn = ['!=', ['string', ['get', 'subject_race_ethn']], 'placeholder'];
-        } else if (ethn === 'black') {
-          filter_ethn = ['match', ['get', 'subject_race'], 'Black', true, false];
-        } else if (ethn === 'white') {
-          filter_ethn = ['match', ['get', 'subject_race'], 'White', true, false];
-        } else if (ethn === 'hisp') {
-          filter_ethn = ['match', ['get', 'subject_ethnicity'], 'Hispanic Or Latino', true, false];
-        } else if (ethn === 'other') {
-          filter_ethn = ['match', ['get', 'subject_race_ethn'], 'Other', true, false];
-        } else {
-          console.log('error');
-        }
-        map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
-        map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
-      });
-
-      // Build Legend
-      var layers = ['White', 'Black', 'Asian', 'American Indian/Alaska Native', 'Native Hawaiian/Other Pacific Islander', 'Unknown'];
-      var colors = ['#fbb03b', '#223b53', '#3bb2d0', '#3bb2d0', '#3bb2d0', '#111111'];
-      for (i = 0; i < layers.length; i++) {
-        var layer = layers[i];
-        var color = colors[i];
-        var item = document.createElement('div');
-        var key = document.createElement('span');
-        key.className = 'legend-key';
-        key.style.backgroundColor = color;
-
-        var value = document.createElement('span');
-        value.innerHTML = layer;
-        item.appendChild(key);
-        item.appendChild(value);
-        legend.appendChild(item);
-      }
+      document.getElementById('active-hour').innerText = 'All Times';
     });
 
-    // Tooltip
-    map.on('mousemove', function(e) {
-      var incident = map.queryRenderedFeatures(e.point, {
-        layers: ['Individual Incidents']
-      });
+    // Ethnicity Filter
+    document.getElementById('ethn_filters').addEventListener('change', function(e) {
+      var ethn = e.target.value;
 
-      if (incident.length > 0) {
-        document.getElementById('pd').innerHTML = '<h3><strong>' + incident[0].properties.subject_gender + '</strong></h3>';
+      if (ethn === 'all') {
+        filter_ethn = ['!=', ['string', ['get', 'subject_race_ethn']], 'placeholder'];
+      } else if (ethn === 'black') {
+        filter_ethn = ['match', ['get', 'subject_race'], 'Black', true, false];
+      } else if (ethn === 'white') {
+        filter_ethn = ['match', ['get', 'subject_race'], 'White', true, false];
+      } else if (ethn === 'hisp') {
+        filter_ethn = ['match', ['get', 'subject_ethnicity'], 'Hispanic Or Latino', true, false];
+      } else if (ethn === 'other') {
+        filter_ethn = ['match', ['get', 'subject_race_ethn'], 'Other', true, false];
       } else {
-        document.getElementById('pd').innerHTML = '<p>Hover over an incident for more information.</p>';
+        console.log('error');
       }
+      map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
+      map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
     });
 
-    // Layer Selection
-    var toggleableLayerIds = ['Individual Incidents', 'Incident Heatmap']
-    var defaultLayerIds = ['Incident Heatmap']
+    // Build Legend
+    var layers = ['White', 'Black', 'Asian', 'American Indian/Alaska Native', 'Native Hawaiian/Other Pacific Islander', 'Unknown'];
+    var colors = ['#fbb03b', '#223b53', '#3bb2d0', '#3bb2d0', '#3bb2d0', '#111111'];
+    for (i = 0; i < layers.length; i++) {
+      var layer = layers[i];
+      var color = colors[i];
+      var item = document.createElement('div');
+      var key = document.createElement('span');
+      key.className = 'legend-key';
+      key.style.backgroundColor = color;
 
-    for (var i = 0; i < toggleableLayerIds.length; i++) {
-        var id = toggleableLayerIds[i];
-
-        var link = document.createElement('a');
-        link.href = '#';
-        if (defaultLayerIds.indexOf(id) >= 0){
-          link.className = 'active';
-        } else {
-          link.className = '';
-        }
-        link.textContent = id;
-
-        link.onclick = function (e) {
-            var clickedLayer = this.textContent;
-            e.preventDefault();
-            e.stopPropagation();
-
-            var visibility = map.getLayoutProperty(clickedLayer, 'visibility');
-
-            if (visibility === 'visible') {
-                map.setLayoutProperty(clickedLayer, 'visibility', 'none');
-                this.className = '';
-            } else {
-                this.className = 'active';
-                map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
-            }
-        };
-
-        var layers = document.getElementById('menu');
-        layers.appendChild(link);
+      var value = document.createElement('span');
+      value.innerHTML = layer;
+      item.appendChild(key);
+      item.appendChild(value);
+      legend.appendChild(item);
     }
+  });
+
+  // Tooltip
+  map.on('mousemove', function(e) {
+    var incident = map.queryRenderedFeatures(e.point, {
+      layers: ['Individual Incidents']
+    });
+
+    if (incident.length > 0) {
+      document.getElementById('pd').innerHTML = '<h3><strong>' + incident[0].properties.subject_gender + '</strong></h3>';
+    } else {
+      document.getElementById('pd').innerHTML = '<p>Hover over an incident for more information.</p>';
+    }
+  });
+
+  // Layer Selection
+  var toggleableLayerIds = ['Individual Incidents', 'Incident Heatmap', 'Police Service Areas']
+  var defaultLayerIds = ['Incident Heatmap']
+
+  for (var i = 0; i < toggleableLayerIds.length; i++) {
+      var id = toggleableLayerIds[i];
+
+      var link = document.createElement('a');
+      link.href = '#';
+      if (defaultLayerIds.indexOf(id) >= 0){
+        link.className = 'active';
+      } else {
+        link.className = '';
+      }
+      link.textContent = id;
+
+      link.onclick = function (e) {
+          var clickedLayer = this.textContent;
+          e.preventDefault();
+          e.stopPropagation();
+
+          var visibility = map.getLayoutProperty(clickedLayer, 'visibility');
+
+          if (visibility === 'visible') {
+              map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+              this.className = '';
+          } else {
+              this.className = 'active';
+              map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+          }
+      };
+
+      var layers = document.getElementById('menu');
+      layers.appendChild(link);
+  }
 
 
   </script>
