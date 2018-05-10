@@ -1,117 +1,121 @@
 <head>
   <meta charset='utf-8' />
-   <title>DC Stop and Frisks</title>
-   <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-   <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
-   <script src='https://api.mapbox.com/mapbox.js/plugins/turf/v3.0.11/turf.min.js'></script>
-   <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+  <title>DC Stop and Frisks</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+  <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+  <script src="https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/SF_Field_Contact_02202018_locations.js"></script>
+  <script src="https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/Police_Service_Areas.js"></script>
 
-   <style>
-     body {
-       margin: 0;
-       padding: 0;
-       font-family: 'Helvetica Neue', Helvetica, Arial, Sans-serif;
-     }
 
-     #map {
-       position: absolute;
-       top: 0;
-       bottom: 0;
-       width: 100%;
-     }
-   </style>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+
+  <style>
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Helvetica Neue', Helvetica, Arial, Sans-serif;
+  }
+
+  #map {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+  }
+  </style>
 </head>
 
 <body>
   <style>
-    h1 {
-      font-size: 20px;
-      line-height: 30px;
-    }
+  h1 {
+    font-size: 20px;
+    line-height: 30px;
+  }
 
-    h2 {
-      font-size: 18px;
-      line-height: 26px;
-    }
-    h3 {
-      font-size: 14px;
-      line-height: 20px;
-      margin-bottom: 10px;
-    }
-    a {
-      text-decoration: none;
-      color: #2dc4b2;
-    }
-    #console {
-      position: absolute;
-      width: 240px;
-      margin: 10px;
-      padding: 10px 20px;
-      background-color: white;
-    }
-    .map-overlay {
-     position: absolute;
-     bottom: 0;
-     right: 0;
-     background: rgba(255, 255, 255, 0.8);
-     margin-right: 20px;
-     font-family: Arial, sans-serif;
-     overflow: auto;
-     border-radius: 3px;
-   }
+  h2 {
+    font-size: 18px;
+    line-height: 26px;
+  }
+  h3 {
+    font-size: 14px;
+    line-height: 20px;
+    margin-bottom: 10px;
+  }
+  a {
+    text-decoration: none;
+    color: #2dc4b2;
+  }
+  #console {
+    position: absolute;
+    width: 240px;
+    margin: 10px;
+    padding: 10px 20px;
+    background-color: white;
+  }
+  .map-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.8);
+    margin-right: 20px;
+    font-family: Arial, sans-serif;
+    overflow: auto;
+    border-radius: 3px;
+  }
 
-   #legend {
-     padding: 10px;
-     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-     line-height: 18px;
-     height: 130px;
-     margin-bottom: 40px;
-     width: 250px;
-   }
-   .legend-key {
-     display: inline-block;
-     border-radius: 20%;
-     width: 10px;
-     height: 10px;
-     margin-right: 5px;
-   }
+  #legend {
+    padding: 10px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    line-height: 18px;
+    height: 130px;
+    margin-bottom: 40px;
+    width: 250px;
+  }
+  .legend-key {
+    display: inline-block;
+    border-radius: 20%;
+    width: 10px;
+    height: 10px;
+    margin-right: 5px;
+  }
 
-   #menu {
-      background: #fff;
-      position: absolute;
-      z-index: 1;
-      top: 10px;
-      right: 10px;
-      border-radius: 3px;
-      width: 120px;
-      border: 1px solid rgba(0,0,0,0.4);
-      font-family: 'Open Sans', sans-serif;
-    }
-    #menu a {
-      font-size: 13px;
-      color: #404040;
-      display: block;
-      margin: 0;
-      padding: 0;
-      padding: 10px;
-      text-decoration: none;
-      border-bottom: 1px solid rgba(0,0,0,0.25);
-      text-align: center;
-    }
-    #menu a:last-child {
-      border: none;
-    }
-    #menu a:hover {
-      background-color: #f8f8f8;
-      color: #404040;
-    }
-    #menu a.active {
-      background-color: #3887be;
-      color: #ffffff;
-    }
-    #menu a.active:hover {
-      background: #3074a4;
-    }
+  #menu {
+    background: #fff;
+    position: absolute;
+    z-index: 1;
+    top: 10px;
+    right: 10px;
+    border-radius: 3px;
+    width: 120px;
+    border: 1px solid rgba(0,0,0,0.4);
+    font-family: 'Open Sans', sans-serif;
+  }
+  #menu a {
+    font-size: 13px;
+    color: #404040;
+    display: block;
+    margin: 0;
+    padding: 0;
+    padding: 10px;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0,0,0,0.25);
+    text-align: center;
+  }
+  #menu a:last-child {
+    border: none;
+  }
+  #menu a:hover {
+    background-color: #f8f8f8;
+    color: #404040;
+  }
+  #menu a.active {
+    background-color: #3887be;
+    color: #ffffff;
+  }
+  #menu a.active:hover {
+    background: #3074a4;
+  }
   </style>
 
   <div id='map'></div>
@@ -124,15 +128,15 @@
     <div class='session'>
       <h3>Race/Ethnicity</h3>
       <div class='row' id='ethn_filters'>
-        <input id='all' type='radio' name='toggle' value='all' checked='checked'>
+        <input id='all' type='radio' name='toggle' value='All' checked='checked'>
         <label for='all'>All</label>
-        <input id='black' type='radio' name='toggle' value='black'>
+        <input id='black' type='radio' name='toggle' value='Black'>
         <label for='black'>Black</label>
-        <input id='white' type='radio' name='toggle' value='white'>
+        <input id='white' type='radio' name='toggle' value='White'>
         <label for='white'>White</label>
-        <input id='hisp' type='radio' name='toggle' value='hisp'>
+        <input id='hisp' type='radio' name='toggle' value='Hispanic or Latino'>
         <label for='hisp'>Hispanic or Latino</label>
-        <input id='other' type='radio' name='toggle' value='other'>
+        <input id='other' type='radio' name='toggle' value='Other'>
         <label for='other'>Other</label>
       </div>
     </div>
@@ -149,244 +153,385 @@
 
 
   <script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoibWFoa2FoIiwiYSI6ImNqZW9zNHBvaTBhc2YzM2x0OWg3aXZ5dTAifQ.F1uwBes6jRJHdwqeSMiA-w';
+  mapboxgl.accessToken = 'pk.eyJ1IjoibWFoa2FoIiwiYSI6ImNqZW9zNHBvaTBhc2YzM2x0OWg3aXZ5dTAifQ.F1uwBes6jRJHdwqeSMiA-w';
 
-    // Load map
-    var map = new mapboxgl.Map({
-      container: 'map', // container element id
-      style: 'mapbox://styles/mapbox/light-v9',
-      center: [-77.030034, 38.901863], // initial map center in [lon, lat]
-      zoom: 11
+  // Load map
+  var map = new mapboxgl.Map({
+    container: 'map', // container element id
+    style: 'mapbox://styles/mapbox/light-v9',
+    center: [-77.030034, 38.901863], // initial map center in [lon, lat]
+    zoom: 11
+  });
+
+
+
+  // Plot incident points
+  map.on('load', function() {
+    var filter_hour = ['!=', ['number', ['get', 'hour']], 25];
+    var filter_ethn = ['!=', ['string', ['get', 'subject_race_ethn']], 'placeholder'];
+
+    // Dataset
+    map.addSource('sffc', {
+      type: 'geojson',
+      data: sffcGEOJSON
     });
 
 
-
-    // Plot incident points
-    map.on('load', function() {
-      var filter_hour = ['!=', ['number', ['get', 'hour']], 25];
-      var filter_ethn = ['!=', ['string', ['get', 'subject_race_ethn']], 'placeholder'];
-
-      // Dataset
-      map.addSource('sfs', {
-        type: 'geojson',
-        data: 'https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/SF_Field_Contact_02202018_locations.geojson'
-      });
-
-      // Layer for Individual Incidents
-      map.addLayer({
-        id: 'Individual Incidents',
-        type: 'circle',
-        source: 'sfs',
-        paint: {
-          'circle-color': [
-            'match',
-            ['get', 'subject_race'],
-            'White', '#fbb03b',
-            'Black', '#223b53',
-            'Asian', '#3bb2d0',
-            'American Indian Or Alaska Native', '#3bb2d0',
-            'Native Hawaiian Or Other Pacific Islander', '#3bb2d0',
-            'Unknown', '#111111',
-            /* other */ '#111111'
-          ],
-          'circle-opacity': 0.3
-        },
-        filter: ['all', filter_hour, filter_ethn]
-        }, 'admin-2-boundaries-dispute'
-      );
-      map.setLayoutProperty('Individual Incidents', 'visibility', 'none')
-
-      // Layer for heatmap
-      map.addLayer({
-        'id': 'Incident Heatmap',
-        'type': 'heatmap',
-        'source': 'sfs',
-        'paint': {
-            // Increase the heatmap color weight weight by zoom level
-            // heatmap-intensity is a multiplier on top of heatmap-weight
-            'heatmap-intensity': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                0, .1,
-                15, .5
-            ],
-            // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
-            // Begin color ramp at 0-stop with a 0-transparancy color
-            // to create a blur-like effect.
-            'heatmap-color': [
-                'interpolate',
-                ['linear'],
-                ['heatmap-density'],
-                0, 'rgba(253,231,37,0)',
-                0.05, 'rgb(253,231,37)',
-                0.10, 'rgb(220,228,23)',
-                0.15, 'rgb(184,222,41)',
-                0.20, 'rgb(147,216,64)',
-                0.25, 'rgb(116,208,85)',
-                0.30, 'rgb(85,198,102)',
-                0.35, 'rgb(60,188,117)',
-                0.40, 'rgb(41,175,127)',
-                0.45, 'rgb(33,163,134)',
-                0.50, 'rgb(32,150,139)',
-                0.55, 'rgb(35,137,141)',
-                0.60, 'rgb(40,124,142)',
-                0.65, 'rgb(45,112,142)',
-                0.70, 'rgb(50,99,142)',
-                0.75, 'rgb(57,84,140)',
-                0.80, 'rgb(63,71,136)',
-                0.85, 'rgb(69,55,129)',
-                0.90, 'rgb(72,39,119)',
-                0.95, 'rgb(72,21,104)',
-                1, 'rgb(68,13,83)'
-            ],
-            // Adjust the heatmap radius by zoom level
-            'heatmap-radius': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                12, 5,
-                25, 180
-            ],
-            // Transition from heatmap to circle layer by zoom level
-            'heatmap-opacity': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                7, .9,
-                13, 0.7
-            ]
-        }
-    }, 'waterway-label');
-    map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
-
-    // Layer for Police Service Areas
+    // Layer for Individual Incidents
     map.addLayer({
-        id: 'Police Service Areas',
-        type: 'fill',
-        source: {
-          type: 'vector',
-          url: 'mapbox://mahkah.dqwaa7qg' // Your Mapbox tileset Map ID
-        },
-        'source-layer': 'Police_Service_Areas-as39av' // name of tilesets
-    });
-    map.setLayoutProperty('Police Service Areas', 'visibility', 'none')
+      id: 'Individual Incidents',
+      type: 'circle',
+      source: 'sffc',
+      paint: {
+        'circle-color': [
+          'match',
+          ['get', 'subject_race'],
+          'White', '#fbb03b',
+          'Black', '#223b53',
+          'Asian', '#3bb2d0',
+          'American Indian Or Alaska Native', '#3bb2d0',
+          'Native Hawaiian Or Other Pacific Islander', '#3bb2d0',
+          'Unknown', '#111111',
+          /* other */ '#111111'
+        ],
+        'circle-opacity': 0.3
+      },
+      filter: ['all', filter_hour, filter_ethn]
+    }, 'admin-2-boundaries-dispute'
+  );
+  map.setLayoutProperty('Individual Incidents', 'visibility', 'none')
 
-
-    var psas = document.getElementById('Police Service Areas');
-    //map.setPaintProperty('Police Service Areas'.value, 'fill-color', color);
-    // Add psas as a column to geojson, interate through each psa and count?
-    // How to filter dataset?
-
-    // Hour Slider
-    document.getElementById('time_slider').addEventListener('input', function(e) {
-      var hour = parseInt(e.target.value);
-
-      filter_hour = ['==', ['number', ['get', 'hour']], hour];
-      map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
-      map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
-
-      var ampm = hour >= 12 ? 'PM' : 'AM';
-      var hour12 = hour % 12 ? hour % 12 : 12;
-      document.getElementById('active-hour').innerText = hour12 + ampm;
-    });
-    document.getElementById('all_time_btn').addEventListener('click', function(e) {
-      filter_hour = ['!=', ['number', ['get', 'hour']], 25];
-      map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
-      map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
-
-      document.getElementById('active-hour').innerText = 'All Times';
-    });
-
-    // Ethnicity Filter
-    document.getElementById('ethn_filters').addEventListener('change', function(e) {
-      var ethn = e.target.value;
-
-      if (ethn === 'all') {
-        filter_ethn = ['!=', ['string', ['get', 'subject_race_ethn']], 'placeholder'];
-      } else if (ethn === 'black') {
-        filter_ethn = ['match', ['get', 'subject_race'], 'Black', true, false];
-      } else if (ethn === 'white') {
-        filter_ethn = ['match', ['get', 'subject_race'], 'White', true, false];
-      } else if (ethn === 'hisp') {
-        filter_ethn = ['match', ['get', 'subject_ethnicity'], 'Hispanic Or Latino', true, false];
-      } else if (ethn === 'other') {
-        filter_ethn = ['match', ['get', 'subject_race_ethn'], 'Other', true, false];
-      } else {
-        console.log('error');
-      }
-      map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
-      map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
-    });
-
-    // Build Legend
-    var layers = ['White', 'Black', 'Asian', 'American Indian/Alaska Native', 'Native Hawaiian/Other Pacific Islander', 'Unknown'];
-    var colors = ['#fbb03b', '#223b53', '#3bb2d0', '#3bb2d0', '#3bb2d0', '#111111'];
-    for (i = 0; i < layers.length; i++) {
-      var layer = layers[i];
-      var color = colors[i];
-      var item = document.createElement('div');
-      var key = document.createElement('span');
-      key.className = 'legend-key';
-      key.style.backgroundColor = color;
-
-      var value = document.createElement('span');
-      value.innerHTML = layer;
-      item.appendChild(key);
-      item.appendChild(value);
-      legend.appendChild(item);
+  // Layer for heatmap
+  map.addLayer({
+    'id': 'Incident Heatmap',
+    'type': 'heatmap',
+    'source': 'sffc',
+    'paint': {
+      // Increase the heatmap color weight weight by zoom level
+      // heatmap-intensity is a multiplier on top of heatmap-weight
+      'heatmap-intensity': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        0, .1,
+        15, .5
+      ],
+      // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+      // Begin color ramp at 0-stop with a 0-transparancy color
+      // to create a blur-like effect.
+      'heatmap-color': [
+        'interpolate',
+        ['linear'],
+        ['heatmap-density'],
+        0, 'rgba(253,231,37,0)',
+        0.05, 'rgb(253,231,37)',
+        0.10, 'rgb(220,228,23)',
+        0.15, 'rgb(184,222,41)',
+        0.20, 'rgb(147,216,64)',
+        0.25, 'rgb(116,208,85)',
+        0.30, 'rgb(85,198,102)',
+        0.35, 'rgb(60,188,117)',
+        0.40, 'rgb(41,175,127)',
+        0.45, 'rgb(33,163,134)',
+        0.50, 'rgb(32,150,139)',
+        0.55, 'rgb(35,137,141)',
+        0.60, 'rgb(40,124,142)',
+        0.65, 'rgb(45,112,142)',
+        0.70, 'rgb(50,99,142)',
+        0.75, 'rgb(57,84,140)',
+        0.80, 'rgb(63,71,136)',
+        0.85, 'rgb(69,55,129)',
+        0.90, 'rgb(72,39,119)',
+        0.95, 'rgb(72,21,104)',
+        1, 'rgb(68,13,83)'
+      ],
+      // Adjust the heatmap radius by zoom level
+      'heatmap-radius': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        12, 5,
+        25, 180
+      ],
+      // Transition from heatmap to circle layer by zoom level
+      'heatmap-opacity': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        7, .9,
+        13, 0.7
+      ]
     }
-  });
+  }, 'waterway-label');
+  map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
 
-  // Tooltip
-  map.on('mousemove', function(e) {
-    var incident = map.queryRenderedFeatures(e.point, {
-      layers: ['Individual Incidents']
-    });
+  // Police Service Areas
+  var psaProp = turf.collect(psaGEOJSON, sffcGEOJSON, 'hour', 'hours');
+  var psaProp = turf.collect(psaProp, sffcGEOJSON, 'subject_race_ethn', 'subject_race_ethns');
 
-    if (incident.length > 0) {
-      document.getElementById('pd').innerHTML = '<h3><strong>' + incident[0].properties.subject_gender + '</strong></h3>';
-    } else {
-      document.getElementById('pd').innerHTML = '<p>Hover over an incident for more information.</p>';
+  var maxSFFS = 0;
+  for (var i = 0; i < psaProp.features.length; i++) {
+    psaProp.features[i].properties.sffs_count = psaProp.features[i].properties.hours.length;
+
+    if (psaProp.features[i].properties.sffs_count > maxSFFS) {
+      maxSFFS = psaProp.features[i].properties.sffs_count;
     }
-  });
-
-  // Layer Selection
-  var toggleableLayerIds = ['Individual Incidents', 'Incident Heatmap', 'Police Service Areas']
-  var defaultLayerIds = ['Incident Heatmap']
-
-  for (var i = 0; i < toggleableLayerIds.length; i++) {
-      var id = toggleableLayerIds[i];
-
-      var link = document.createElement('a');
-      link.href = '#';
-      if (defaultLayerIds.indexOf(id) >= 0){
-        link.className = 'active';
-      } else {
-        link.className = '';
-      }
-      link.textContent = id;
-
-      link.onclick = function (e) {
-          var clickedLayer = this.textContent;
-          e.preventDefault();
-          e.stopPropagation();
-
-          var visibility = map.getLayoutProperty(clickedLayer, 'visibility');
-
-          if (visibility === 'visible') {
-              map.setLayoutProperty(clickedLayer, 'visibility', 'none');
-              this.className = '';
-          } else {
-              this.className = 'active';
-              map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
-          }
-      };
-
-      var layers = document.getElementById('menu');
-      layers.appendChild(link);
   }
 
+  var psaColor = [];
+  for (var i = 0; i < 20; i++) {
+    psaColor[i] = maxSFFS * (i / 19);
+  }
 
-  </script>
+  // Create arrays to house filters
+  var hourIndicesPSA = [];
+  var raceIndicesPSA = [];
+  for (var i = 0; i < psaProp.features.length; i++) {
+    hourIndicesPSA[i] = new Set(Array.apply(null, {length: psaProp.features[i].properties.hours.length}).map(Number.call, Number));
+    raceIndicesPSA[i] = new Set(hourIndicesPSA[i]);
+  }
+
+  map.addSource('psas', {
+    type: 'geojson',
+    data: psaProp
+  });
+
+  map.addLayer({
+    'id': "Police Service Areas",
+    'type': 'fill',
+    'source': 'psas',
+    'paint': {
+      'fill-color': [
+        'interpolate',
+        ['linear'],
+        ['get', 'sffs_count'],
+        psaColor[0], 'rgb(253,231,37)',
+        psaColor[1], 'rgb(220,228,23)',
+        psaColor[2], 'rgb(184,222,41)',
+        psaColor[3], 'rgb(147,216,64)',
+        psaColor[4], 'rgb(116,208,85)',
+        psaColor[5], 'rgb(85,198,102)',
+        psaColor[6], 'rgb(60,188,117)',
+        psaColor[7], 'rgb(41,175,127)',
+        psaColor[8], 'rgb(33,163,134)',
+        psaColor[9], 'rgb(32,150,139)',
+        psaColor[10], 'rgb(35,137,141)',
+        psaColor[11], 'rgb(40,124,142)',
+        psaColor[12], 'rgb(45,112,142)',
+        psaColor[13], 'rgb(50,99,142)',
+        psaColor[14], 'rgb(57,84,140)',
+        psaColor[15], 'rgb(63,71,136)',
+        psaColor[16], 'rgb(69,55,129)',
+        psaColor[17], 'rgb(72,39,119)',
+        psaColor[18], 'rgb(72,21,104)',
+        psaColor[19], 'rgb(68,13,83)'
+      ],
+      'fill-opacity': 0.7
+    }
+  })
+  map.setLayoutProperty('Police Service Areas', 'visibility', 'none');
+
+
+
+
+  // Filters
+  function filterUpdate() {
+    map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
+    map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
+
+    // Recaluclates and sets PSA colors
+    var maxSFFS = 0;
+    for (var i = 0; i < psaProp.features.length; i++) {
+      var intersection_indices = intersect(hourIndicesPSA[i], raceIndicesPSA[i]);
+      psaProp.features[i].properties.sffs_count = intersection_indices.size;
+
+      if (psaProp.features[i].properties.sffs_count > maxSFFS) {
+        maxSFFS = psaProp.features[i].properties.sffs_count;
+      }
+    }
+    for (var i = 0; i < 20; i++) {
+      psaColor[i] = maxSFFS * (i / 19);
+    }
+    map.getSource('psas').setData(psaProp);
+    map.setPaintProperty('Police Service Areas', 'fill-color', [
+      'interpolate',
+      ['linear'],
+      ['get', 'sffs_count'],
+      psaColor[0], 'rgb(253,231,37)',
+      psaColor[1], 'rgb(220,228,23)',
+      psaColor[2], 'rgb(184,222,41)',
+      psaColor[3], 'rgb(147,216,64)',
+      psaColor[4], 'rgb(116,208,85)',
+      psaColor[5], 'rgb(85,198,102)',
+      psaColor[6], 'rgb(60,188,117)',
+      psaColor[7], 'rgb(41,175,127)',
+      psaColor[8], 'rgb(33,163,134)',
+      psaColor[9], 'rgb(32,150,139)',
+      psaColor[10], 'rgb(35,137,141)',
+      psaColor[11], 'rgb(40,124,142)',
+      psaColor[12], 'rgb(45,112,142)',
+      psaColor[13], 'rgb(50,99,142)',
+      psaColor[14], 'rgb(57,84,140)',
+      psaColor[15], 'rgb(63,71,136)',
+      psaColor[16], 'rgb(69,55,129)',
+      psaColor[17], 'rgb(72,39,119)',
+      psaColor[18], 'rgb(72,21,104)',
+      psaColor[19], 'rgb(68,13,83)'
+    ]);
+  }
+
+  function intersect(firstSet,...sets) {
+    var count = sets.length;
+    var result = new Set(firstSet); // Only create one copy of the set
+    firstSet.forEach(item => {
+      var i = count;
+      var allHave = true;
+      while(i--){
+        allHave = sets[i].has(item)
+        if(!allHave) { break }  // loop only until item fails test
+      }
+      if(!allHave){
+        result.delete(item);
+      }
+    })
+    return result;
+  }
+
+  // Hour Slider
+  document.getElementById('time_slider').addEventListener('input', function(e) {
+    var hour = parseInt(e.target.value);
+
+    var ampm = hour >= 12 ? 'PM' : 'AM';
+    var hour12 = hour % 12 ? hour % 12 : 12;
+    document.getElementById('active-hour').innerText = hour12 + ampm;
+
+    //Point Maps
+    filter_hour = ['==', ['number', ['get', 'hour']], hour];
+
+    // Choropleth Maps
+    hourIndicesPSA = [];
+    for (var i = 0; i < psaProp.features.length; i++) {
+      hourIndicesPSA[i] = new Set();
+
+      var j = psaProp.features[i].properties.hours.indexOf(hour);
+      while (j != -1) {
+        hourIndicesPSA[i].add(j);
+        j = psaProp.features[i].properties.hours.indexOf(hour, j + 1);
+      }
+    }
+
+    // Refresh Filters
+    filterUpdate()
+  });
+  document.getElementById('all_time_btn').addEventListener('click', function(e) {
+    document.getElementById('active-hour').innerText = 'All Times';
+
+    filter_hour = ['!=', ['number', ['get', 'hour']], 25];
+
+    hourIndicesPSA = [];
+    for (var i = 0; i < psaProp.features.length; i++) {
+      hourIndicesPSA[i] = Array.apply(null, {length: psaProp.features[i].properties.hours.length}).map(Number.call, Number);
+    }
+
+    filterUpdate()
+  });
+
+  // Ethnicity Filter
+  document.getElementById('ethn_filters').addEventListener('change', function(e) {
+    var ethn = e.target.value;
+
+    if (ethn === 'All') {
+      filter_ethn = ['!=', ['string', ['get', 'subject_race_ethn']], 'placeholder'];
+
+      for (var i = 0; i < psaProp.features.length; i++) {
+        raceIndicesPSA[i] = new Set(Array.apply(null, {length: psaProp.features[i].properties.subject_race_ethns.length}).map(Number.call, Number));
+      }
+    } else {
+      filter_ethn = ['match', ['get', 'subject_race_ethn'], ethn, true, false];
+
+      raceIndicesPSA = [];
+      for (var i = 0; i < psaProp.features.length; i++) {
+        raceIndicesPSA[i] = new Set();
+
+        var j = psaProp.features[i].properties.subject_race_ethns.indexOf(ethn);
+        while (j != -1) {
+          raceIndicesPSA[i].add(j);
+          j = psaProp.features[i].properties.subject_race_ethns.indexOf(ethn, j + 1);
+        }
+      }
+    }
+
+    filterUpdate()
+  });
+
+  // Build Legend
+  var layers = ['White', 'Black', 'Asian', 'American Indian/Alaska Native', 'Native Hawaiian/Other Pacific Islander', 'Unknown'];
+  var colors = ['#fbb03b', '#223b53', '#3bb2d0', '#3bb2d0', '#3bb2d0', '#111111'];
+  for (i = 0; i < layers.length; i++) {
+    var layer = layers[i];
+    var color = colors[i];
+    var item = document.createElement('div');
+    var key = document.createElement('span');
+    key.className = 'legend-key';
+    key.style.backgroundColor = color;
+
+    var value = document.createElement('span');
+    value.innerHTML = layer;
+    item.appendChild(key);
+    item.appendChild(value);
+    legend.appendChild(item);
+  }
+});
+
+// Tooltip
+map.on('mousemove', function(e) {
+  var incident = map.queryRenderedFeatures(e.point, {
+    layers: ['Individual Incidents']
+  });
+
+  if (incident.length > 0) {
+    document.getElementById('pd').innerHTML = '<h3><strong>' + incident[0].properties.subject_gender + '</strong></h3>';
+  } else {
+    document.getElementById('pd').innerHTML = '<p>Hover over an incident for more information.</p>';
+  }
+});
+
+// Layer Selection
+var toggleableLayerIds = ['Individual Incidents', 'Incident Heatmap', 'Police Service Areas']
+var defaultLayerIds = ['Incident Heatmap']
+
+for (var i = 0; i < toggleableLayerIds.length; i++) {
+  var id = toggleableLayerIds[i];
+
+  var link = document.createElement('a');
+  link.href = '#';
+  if (defaultLayerIds.indexOf(id) >= 0){
+    link.className = 'active';
+  } else {
+    link.className = '';
+  }
+  link.textContent = id;
+
+  link.onclick = function (e) {
+    var clickedLayer = this.textContent;
+    e.preventDefault();
+    e.stopPropagation();
+
+    var visibility = map.getLayoutProperty(clickedLayer, 'visibility');
+
+    if (visibility === 'visible') {
+      map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+      this.className = '';
+    } else {
+      this.className = 'active';
+      map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+    }
+  };
+
+  var layers = document.getElementById('menu');
+  layers.appendChild(link);
+}
+
+
+</script>
 </body>
