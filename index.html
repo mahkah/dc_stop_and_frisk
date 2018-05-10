@@ -4,8 +4,7 @@
   <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
   <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
   <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
-  <script src="/js/leaflet-0.7.2/leaflet.ajax.min.js"></script>
-
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
   <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
 
@@ -152,7 +151,26 @@
 
 
   <script>
+  // Config
   mapboxgl.accessToken = 'pk.eyJ1IjoibWFoa2FoIiwiYSI6ImNqZW9zNHBvaTBhc2YzM2x0OWg3aXZ5dTAifQ.F1uwBes6jRJHdwqeSMiA-w';
+
+  // Load Datasets
+  var psaGEOJSON = $.ajax({
+    url:"https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/Police_Service_Areas.geojson",
+    dataType: "json",
+    success: console.log("Police Service Area data successfully loaded."),
+    error: function (xhr) {
+      alert(xhr.statusText)
+    }
+  });
+  var sffcGEOJSON = $.ajax({
+    url:"https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/SF_Field_Contact_02202018_locations.geojson",
+    dataType: "json",
+    success: console.log("Stop and frisk incident data successfully loaded."),
+    error: function (xhr) {
+      alert(xhr.statusText)
+    }
+  });
 
   // Load map
   var map = new mapboxgl.Map({
@@ -162,8 +180,6 @@
     zoom: 11
   });
 
-  var sffcGEOJSON = new L.GeoJSON.AJAX("https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/Police_Service_Areas.geojson");
-  var psaGEOJSON = new L.GeoJSON.AJAX("https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/SF_Field_Contact_02202018_locations.geojson");
 
   // Plot incident points
   map.on('load', function() {
@@ -173,7 +189,7 @@
     // Dataset
     map.addSource('sffc', {
       type: 'geojson',
-      data: sffcGEOJSON
+      data: sffcGEOJSON.responseJSON
     });
 
 
@@ -266,21 +282,21 @@
   map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
 
   // Police Service Areas
-  var psaProp = turf.collect(psaGEOJSON, sffcGEOJSON, 'hour', 'hours');
-  var psaProp = turf.collect(psaProp, sffcGEOJSON, 'subject_race_ethn', 'subject_race_ethns');
+  var psaProp = turf.collect(psaGEOJSON.responseJSON, sffcGEOJSON.responseJSON, 'hour', 'hours');
+  var psaProp = turf.collect(psaProp, sffcGEOJSON.responseJSON, 'subject_race_ethn', 'subject_race_ethns');
 
-  var maxSFFS = 0;
+  var maxSFFC = 0;
   for (var i = 0; i < psaProp.features.length; i++) {
-    psaProp.features[i].properties.sffs_count = psaProp.features[i].properties.hours.length;
+    psaProp.features[i].properties.sffcCount = psaProp.features[i].properties.hours.length;
 
-    if (psaProp.features[i].properties.sffs_count > maxSFFS) {
-      maxSFFS = psaProp.features[i].properties.sffs_count;
+    if (psaProp.features[i].properties.sffcCount > maxSFFC) {
+      maxSFFC = psaProp.features[i].properties.sffcCount;
     }
   }
 
   var psaColor = [];
   for (var i = 0; i < 20; i++) {
-    psaColor[i] = maxSFFS * (i / 19);
+    psaColor[i] = maxSFFC * (i / 19);
   }
 
   // Create arrays to house filters
@@ -304,7 +320,7 @@
       'fill-color': [
         'interpolate',
         ['linear'],
-        ['get', 'sffs_count'],
+        ['get', 'sffcCount'],
         psaColor[0], 'rgb(253,231,37)',
         psaColor[1], 'rgb(220,228,23)',
         psaColor[2], 'rgb(184,222,41)',
@@ -340,23 +356,23 @@
     map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
 
     // Recaluclates and sets PSA colors
-    var maxSFFS = 0;
+    var maxSFFC = 0;
     for (var i = 0; i < psaProp.features.length; i++) {
       var intersection_indices = intersect(hourIndicesPSA[i], raceIndicesPSA[i]);
-      psaProp.features[i].properties.sffs_count = intersection_indices.size;
+      psaProp.features[i].properties.sffcCount = intersection_indices.size;
 
-      if (psaProp.features[i].properties.sffs_count > maxSFFS) {
-        maxSFFS = psaProp.features[i].properties.sffs_count;
+      if (psaProp.features[i].properties.sffcCount > maxSFFC) {
+        maxSFFC = psaProp.features[i].properties.sffcCount;
       }
     }
     for (var i = 0; i < 20; i++) {
-      psaColor[i] = maxSFFS * (i / 19);
+      psaColor[i] = maxSFFC * (i / 19);
     }
     map.getSource('psas').setData(psaProp);
     map.setPaintProperty('Police Service Areas', 'fill-color', [
       'interpolate',
       ['linear'],
-      ['get', 'sffs_count'],
+      ['get', 'sffcCount'],
       psaColor[0], 'rgb(253,231,37)',
       psaColor[1], 'rgb(220,228,23)',
       psaColor[2], 'rgb(184,222,41)',
