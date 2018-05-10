@@ -4,8 +4,7 @@
   <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
   <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
   <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
-  <script src="https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/SF_Field_Contact_02202018_locations.js"></script>
-  <script src="https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/Police_Service_Areas.js"></script>
+  <script src="/js/leaflet-0.7.2/leaflet.ajax.min.js"></script>
 
 
   <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
@@ -163,7 +162,8 @@
     zoom: 11
   });
 
-
+  var sffcGEOJSON = new L.GeoJSON.AJAX("https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/Police_Service_Areas.geojson");
+  var psaGEOJSON = new L.GeoJSON.AJAX("https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/SF_Field_Contact_02202018_locations.geojson");
 
   // Plot incident points
   map.on('load', function() {
