@@ -154,7 +154,7 @@
   // Config
   mapboxgl.accessToken = 'pk.eyJ1IjoibWFoa2FoIiwiYSI6ImNqZW9zNHBvaTBhc2YzM2x0OWg3aXZ5dTAifQ.F1uwBes6jRJHdwqeSMiA-w';
 
-  // Load Datasets
+  // Retrieve Datasets
   var psaGEOJSON = $.ajax({
     url:"https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/Police_Service_Areas.geojson",
     dataType: "json",
@@ -181,50 +181,120 @@
   });
 
 
-  // Plot incident points
+
   map.on('load', function() {
+    // Initialize Filters for indidivudal incident layers
     var filter_hour = ['!=', ['number', ['get', 'hour']], 25];
     var filter_ethn = ['!=', ['string', ['get', 'subject_race_ethn']], 'placeholder'];
 
-    // Dataset
-    map.addSource('sffc', {
+    // Point Clusters of Individual Incidents
+    map.addSource('sffc_cluster', {
       type: 'geojson',
-      data: sffcGEOJSON.responseJSON
+      data: sffcGEOJSON.responseJSON,
+      cluster: true,
+      clusterMaxZoom: 29,
+      clusterRadius: 30
     });
-
 
     // Layer for Individual Incidents
     map.addLayer({
       id: 'Individual Incidents',
       type: 'circle',
-      source: 'sffc',
+      source: 'sffc_cluster',
+      filter: ['all', filter_hour, filter_ethn],
       paint: {
-        'circle-color': [
-          'match',
-          ['get', 'subject_race'],
-          'White', '#fbb03b',
-          'Black', '#223b53',
-          'Asian', '#3bb2d0',
-          'American Indian Or Alaska Native', '#3bb2d0',
-          'Native Hawaiian Or Other Pacific Islander', '#3bb2d0',
-          'Unknown', '#111111',
-          /* other */ '#111111'
-        ],
-        'circle-opacity': 0.3
-      },
-      filter: ['all', filter_hour, filter_ethn]
+        "circle-color": "rgb(253,231,37)",
+        "circle-radius": 4,
+        "circle-stroke-width": 1,
+        "circle-stroke-color": "#111",
+        "circle-opacity": 0.7
+      }
     }, 'admin-2-boundaries-dispute'
   );
-  map.setLayoutProperty('Individual Incidents', 'visibility', 'none')
 
-  // Layer for heatmap
+  map.addLayer({
+    id: "clusters",
+    type: "circle",
+    source: "sffc_cluster",
+    filter:  ['all', ["has", "point_count"]],
+    paint: {
+      "circle-color": [
+        "interpolate",
+        ["exponential", 2.5],
+        ["get", "point_count"],
+        1, 'rgb(253,231,37)',
+        6, 'rgb(220,228,23)',
+        16, 'rgb(184,222,41)',
+        32, 'rgb(147,216,64)',
+        56, 'rgb(116,208,85)',
+        88, 'rgb(85,198,102)',
+        130, 'rgb(60,188,117)',
+        181, 'rgb(41,175,127)',
+        243, 'rgb(33,163,134)',
+        316, 'rgb(32,150,139)',
+        401, 'rgb(35,137,141)',
+        499, 'rgb(40,124,142)',
+        609, 'rgb(45,112,142)',
+        733, 'rgb(50,99,142)',
+        871, 'rgb(57,84,140)',
+        1024, 'rgb(63,71,136)',
+        1192, 'rgb(69,55,129)',
+        1375, 'rgb(72,39,119)',
+        1574, 'rgb(72,21,104)',
+        1789, 'rgb(68,13,83)'
+      ],
+      "circle-radius": [
+        "interpolate",
+        ["exponential", 2.5],
+        ["get", "point_count"],
+        1, 5,
+        6, 6,
+        16, 7,
+        32, 8,
+        56, 9,
+        88, 10,
+        130, 11,
+        181, 12,
+        243, 13,
+        316, 14,
+        401, 15,
+        499, 16,
+        609, 17,
+        733, 18,
+        871, 19,
+        1024, 20,
+        1192, 21,
+        1375, 22,
+        1574, 23,
+        1789, 24
+      ],
+      'circle-opacity': 0.7
+    }
+  });
+
+  map.addLayer({
+    id: "Individual Incidents Count",
+    type: "symbol",
+    source: "sffc_cluster",
+    filter:  ['all', ["has", "point_count"]],
+    layout: {
+      "text-field": "{point_count_abbreviated}",
+      "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+      "text-size": 12
+    }
+  });
+
+  // Heatmap
+  map.addSource('sffc', {
+    type: 'geojson',
+    data: sffcGEOJSON.responseJSON
+  });
+
   map.addLayer({
     'id': 'Incident Heatmap',
     'type': 'heatmap',
     'source': 'sffc',
     'paint': {
-      // Increase the heatmap color weight weight by zoom level
-      // heatmap-intensity is a multiplier on top of heatmap-weight
       'heatmap-intensity': [
         'interpolate',
         ['linear'],
@@ -232,9 +302,6 @@
         0, .1,
         15, .5
       ],
-      // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
-      // Begin color ramp at 0-stop with a 0-transparancy color
-      // to create a blur-like effect.
       'heatmap-color': [
         'interpolate',
         ['linear'],
@@ -261,7 +328,6 @@
         0.95, 'rgb(72,21,104)',
         1, 'rgb(68,13,83)'
       ],
-      // Adjust the heatmap radius by zoom level
       'heatmap-radius': [
         'interpolate',
         ['linear'],
@@ -269,7 +335,6 @@
         12, 5,
         25, 180
       ],
-      // Transition from heatmap to circle layer by zoom level
       'heatmap-opacity': [
         'interpolate',
         ['linear'],
@@ -278,8 +343,10 @@
         13, 0.7
       ]
     }
-  }, 'waterway-label');
+  }, 'Individual Incidents');
   map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
+  map.setLayoutProperty('Incident Heatmap', 'visibility', 'none');
+
 
   // Police Service Areas
   var psaProp = turf.collect(psaGEOJSON.responseJSON, sffcGEOJSON.responseJSON, 'hour', 'hours');
@@ -344,7 +411,7 @@
       ],
       'fill-opacity': 0.7
     }
-  })
+  }, 'Individual Incidents')
   map.setLayoutProperty('Police Service Areas', 'visibility', 'none');
 
 
@@ -352,7 +419,13 @@
 
   // Filters
   function filterUpdate() {
-    map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn]);
+    // Sets filtered data for cluster maps
+    var clusterData = sffcGEOJSON.responseJSON.features.filter(filterHourCluster);
+    var clusterData = clusterData.filter(filterEthnCluster);
+    var clusterData = turf.featureCollection(clusterData);
+    map.getSource('sffc_cluster').setData(clusterData);
+
+    // Updates Point Map Filters
     map.setFilter('Incident Heatmap', ['all', filter_hour, filter_ethn]);
 
     // Recaluclates and sets PSA colors
@@ -413,13 +486,26 @@
     return result;
   }
 
+  var filterHourCluster = function(i) {
+    return i.properties.hour === 10;
+  }
+  var filterEthnCluster = function(i) {
+    return true;
+  }
+
   // Hour Slider
   document.getElementById('time_slider').addEventListener('input', function(e) {
     var hour = parseInt(e.target.value);
 
+    // Update Filter Control's Display
     var ampm = hour >= 12 ? 'PM' : 'AM';
     var hour12 = hour % 12 ? hour % 12 : 12;
     document.getElementById('active-hour').innerText = hour12 + ampm;
+
+    // Cluster Maps
+    filterHourCluster = function(i) {
+      return i.properties.hour === hour;
+    }
 
     //Point Maps
     filter_hour = ['==', ['number', ['get', 'hour']], hour];
@@ -437,19 +523,28 @@
     }
 
     // Refresh Filters
-    filterUpdate()
+    console.log("Running filterUpdate, hour set to " + hour);
+    filterUpdate();
   });
   document.getElementById('all_time_btn').addEventListener('click', function(e) {
+    // Update Filter Control's Display
     document.getElementById('active-hour').innerText = 'All Times';
 
+    // Cluster Maps
+    filterHourCluster = function(i) {
+      return true;
+    }
+
+    // Point Maps
     filter_hour = ['!=', ['number', ['get', 'hour']], 25];
 
+    // Choropleth Maps
     hourIndicesPSA = [];
     for (var i = 0; i < psaProp.features.length; i++) {
       hourIndicesPSA[i] = Array.apply(null, {length: psaProp.features[i].properties.hours.length}).map(Number.call, Number);
     }
 
-    filterUpdate()
+    filterUpdate();
   });
 
   // Ethnicity Filter
@@ -457,14 +552,28 @@
     var ethn = e.target.value;
 
     if (ethn === 'All') {
+      // Cluster Maps
+      filterEthnCluster = function(i) {
+        return true;
+      }
+
+      // Point Maps
       filter_ethn = ['!=', ['string', ['get', 'subject_race_ethn']], 'placeholder'];
 
+      // Choropleth Maps
       for (var i = 0; i < psaProp.features.length; i++) {
         raceIndicesPSA[i] = new Set(Array.apply(null, {length: psaProp.features[i].properties.subject_race_ethns.length}).map(Number.call, Number));
       }
     } else {
+      // Cluster Maps
+      filterEthnCluster = function(i) {
+        return i.properties.subject_race_ethn === ethn;
+      }
+
+      // Point Maps
       filter_ethn = ['match', ['get', 'subject_race_ethn'], ethn, true, false];
 
+      // Choropleth Maps
       raceIndicesPSA = [];
       for (var i = 0; i < psaProp.features.length; i++) {
         raceIndicesPSA[i] = new Set();
@@ -477,7 +586,7 @@
       }
     }
 
-    filterUpdate()
+    filterUpdate();
   });
 
   // Build Legend
@@ -500,47 +609,55 @@
 });
 
 // Tooltip
-map.on('mousemove', function(e) {
-  var incident = map.queryRenderedFeatures(e.point, {
-    layers: ['Individual Incidents']
-  });
-
-  if (incident.length > 0) {
-    document.getElementById('pd').innerHTML = '<h3><strong>' + incident[0].properties.subject_gender + '</strong></h3>';
-  } else {
-    document.getElementById('pd').innerHTML = '<p>Hover over an incident for more information.</p>';
-  }
-});
+// map.on('mousemove', function(e) {
+//   var incident = map.queryRenderedFeatures(e.point, {
+//     layers: ['Individual Incidents']
+//   });
+//
+//   if (incident.length > 0) {
+//     document.getElementById('pd').innerHTML = '<h3><strong>' + incident[0].properties.subject_gender + '</strong></h3>';
+//   } else {
+//     document.getElementById('pd').innerHTML = '<p>Hover over an incident for more information.</p>';
+//   }
+// });
 
 // Layer Selection
-var toggleableLayerIds = ['Individual Incidents', 'Incident Heatmap', 'Police Service Areas']
-var defaultLayerIds = ['Incident Heatmap']
+var toggleableLayers = ['Individual Incidents', 'Incident Heatmap', 'Police Service Areas']
+var toggleableLayerIds = [['Individual Incidents', 'clusters', 'Individual Incidents Count'],
+  ['Incident Heatmap'],
+  ['Police Service Areas']]
+var defaultLayerIds = ['Individual Incidents']
 
-for (var i = 0; i < toggleableLayerIds.length; i++) {
-  var id = toggleableLayerIds[i];
+for (var i = 0; i < toggleableLayers.length; i++) {
 
+  // Build buttons for each layer
   var link = document.createElement('a');
   link.href = '#';
-  if (defaultLayerIds.indexOf(id) >= 0){
+  if (defaultLayerIds.indexOf(toggleableLayers[i]) >= 0){
     link.className = 'active';
   } else {
     link.className = '';
   }
-  link.textContent = id;
+  link.textContent = toggleableLayers[i];
 
+  // Add interactivity
   link.onclick = function (e) {
-    var clickedLayer = this.textContent;
+    var clickedLayer = toggleableLayers.indexOf(this.textContent);
     e.preventDefault();
     e.stopPropagation();
 
-    var visibility = map.getLayoutProperty(clickedLayer, 'visibility');
+    var visibility = map.getLayoutProperty(toggleableLayerIds[clickedLayer][0], 'visibility');
 
     if (visibility === 'visible') {
-      map.setLayoutProperty(clickedLayer, 'visibility', 'none');
       this.className = '';
+      for (var i = 0; i < toggleableLayerIds[clickedLayer].length; i++) {
+        map.setLayoutProperty(toggleableLayerIds[clickedLayer][i], 'visibility', 'none');
+      }
     } else {
       this.className = 'active';
-      map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+      for (var i = 0; i < toggleableLayerIds[clickedLayer].length; i++) {
+        map.setLayoutProperty(toggleableLayerIds[clickedLayer][i], 'visibility', 'visible');
+      }
     }
   };
 
