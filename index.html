@@ -547,10 +547,10 @@
     var hour12 = hour % 12 ? hour % 12 : 12;
     document.getElementById('active-hour').innerText = hour12 + ampm;
     // Single Incidents
-    filter_hour = ['==', ['number', ['get', 'hour']], hour];
+    filter_hour = ['==', ['number', ['get', 'hr']], hour];
     // Incident Clusters
     filterHourCluster = function(i) {
-      return i.properties.hour === hour;
+      return i.properties.hr === hour;
     }
     // Choropleth layers
     singleValueFilter(psaProp, psaIndices, filterAttributes, 'hr', hour);
