@@ -152,6 +152,11 @@
       </div>
     </div>
     <div class='session' id='sliderbar'>
+      <h3>Year: <label id='active-year'>All Years</label></h3>
+      <button class='btn' id='all_years_btn'>All Years</button>
+      <input id='year_slider' class='row' type='range' min='2010' max='2016' step='1' value='2016'/>
+    </div>
+    <div class='session' id='sliderbar'>
       <h3>Hour: <label id='active-hour'>All Times</label></h3>
       <button class='btn' id='all_time_btn'>All Times</button>
       <input id='time_slider' class='row' type='range' min='0' max='23' step='1' value='22'/>
@@ -198,9 +203,10 @@
 
   // Data Layers
   map.on('load', function() {
-    var filter_hour = ['!=', ['number', ['get', 'hr']], 25];
     var filter_ethn = ['!=', ['string', ['get', 'race']], 'placeholder'];
     var filter_gen = ['!=', ['string', ['get', 'gen']], 'placeholder'];
+    var filter_hour = ['!=', ['number', ['get', 'hr']], 25];
+    var filter_year = ['!=', ['number', ['get', 'yr']], 25];
 
     // Incident Cluster Layer
     map.addSource('sffc_cluster', {
@@ -215,7 +221,7 @@
       id: 'Individual Incidents',
       type: 'circle',
       source: 'sffc_cluster',
-      filter: ['all', filter_hour, filter_ethn, filter_gen],
+      filter: ['all', filter_ethn, filter_gen, filter_year, filter_hour],
       paint: {
         "circle-color": "rgb(253,231,37)",
         "circle-radius": 4,
@@ -298,15 +304,19 @@
     }
   });
   // Cluster Layer Default filters
-  var filterHourCluster = function(i) {
-    return true;
-  }
   var filterEthnCluster = function(i) {
     return true;
   }
   var filterGenderCluster = function(i) {
     return true;
   }
+  var filterHourCluster = function(i) {
+    return true;
+  }
+  var filterYearCluster = function(i) {
+    return true;
+  }
+
 
   // Choropleth Maps
   /** Appends an array of attributes on all the incidents that occured in each polygon. */
@@ -385,7 +395,7 @@
   }
 
   // Define attributes to collect from individual incidents for filtering
-  var filterAttributes = ['race', 'race', 'gen', 'age', 'yr', 'mon', 'day', 'hr'];
+  var filterAttributes = ['race', 'gen', 'age', 'yr', 'mon', 'day', 'hr'];
   // Keep track of whether or not we actually need to filter on each attribute
   var filterOn = [];
   for (var i = 0; i < filterAttributes.length; ++i) {
@@ -393,7 +403,6 @@
   }
   // Police Service Area Layer
   var psaProp = psaGEOJSON.responseJSON;
-  console.log(psaProp)
   var psaIndices = initializeIndices(psaProp, filterAttributes);
   plotChoropleth(psaProp, 'psas', 'Police Service Areas');
   // Census Tract Layer
@@ -500,11 +509,12 @@
   /** Updates the filters for all map layers. */
   function filterUpdate() {
     // Single incidents
-    map.setFilter('Individual Incidents', ['all', filter_hour, filter_ethn, filter_gen]);
+    map.setFilter('Individual Incidents', ['all', filter_ethn, filter_gen, filter_year, filter_hour]);
     // Cluster Layer
-    var clusterData = sffcGEOJSON.responseJSON.features.filter(filterHourCluster);
-    var clusterData = clusterData.filter(filterEthnCluster);
+    var clusterData = sffcGEOJSON.responseJSON.features.filter(filterEthnCluster);
     var clusterData = clusterData.filter(filterGenderCluster);
+    var clusterData = clusterData.filter(filterYearCluster);
+    var clusterData = clusterData.filter(filterHourCluster);
     var clusterData = turf.featureCollection(clusterData);
     map.getSource('sffc_cluster').setData(clusterData);
     // Choropleth layers
@@ -538,50 +548,6 @@
     }
     filterOn[filterArray.indexOf(attribute)] = true;
   }
-
-  // Hour Slider
-  document.getElementById('time_slider').addEventListener('input', function(e) {
-    var hour = parseInt(e.target.value);
-    // Update Filter Control's Display
-    var ampm = hour >= 12 ? 'PM' : 'AM';
-    var hour12 = hour % 12 ? hour % 12 : 12;
-    document.getElementById('active-hour').innerText = hour12 + ampm;
-    // Single Incidents
-    filter_hour = ['==', ['number', ['get', 'hr']], hour];
-    // Incident Clusters
-    filterHourCluster = function(i) {
-      return i.properties.hr === hour;
-    }
-    // Choropleth layers
-    singleValueFilter(psaProp, psaIndices, filterAttributes, 'hr', hour);
-    singleValueFilter(censusTractProp, censusTractIndices, filterAttributes, 'hr', hour);
-    singleValueFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'hr', hour);
-    singleValueFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'hr', hour);
-    singleValueFilter(wardProp, wardIndices, filterAttributes, 'hr', hour);
-    // Refresh Filters
-    filterUpdate();
-  });
-
-  // All Time Button
-  document.getElementById('all_time_btn').addEventListener('click', function(e) {
-    // Update Filter Control's Display
-    document.getElementById('active-hour').innerText = 'All Times';
-    // Single Incidents
-    filter_hour = ['!=', ['number', ['get', 'hour']], 25];
-    // Incident Clusters
-    filterHourCluster = function(i) {
-      return true;
-    }
-    // Choropleth layers
-    allFilter(psaProp, psaIndices, filterAttributes, 'hr');
-    allFilter(censusTractProp, censusTractIndices, filterAttributes, 'hr');
-    allFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'hr');
-    allFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'hr');
-    allFilter(wardProp, wardIndices, filterAttributes, 'hr');
-    // Refresh Filters
-    filterUpdate();
-  });
-
 
   // Ethnicity Filter
   document.getElementById('ethn_filters').addEventListener('change', function(e) {
@@ -646,6 +612,90 @@
       singleValueFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'gen', gen);
       singleValueFilter(wardProp, wardIndices, filterAttributes, 'gen', gen);
     }
+    filterUpdate();
+  });
+
+  // Year Slider
+  document.getElementById('year_slider').addEventListener('input', function(e) {
+    var yr = parseInt(e.target.value);
+    // Update Filter Control's Display
+    document.getElementById('active-year').innerText = yr;
+    // Single Incidents
+    filter_year = ['==', ['number', ['get', 'yr']], yr];
+    // Incident Clusters
+    filterYearCluster = function(i) {
+      return i.properties.yr === yr;
+    }
+    // Choropleth layers
+    singleValueFilter(psaProp, psaIndices, filterAttributes, 'yr', yr);
+    singleValueFilter(censusTractProp, censusTractIndices, filterAttributes, 'yr', yr);
+    singleValueFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'yr', yr);
+    singleValueFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'yr', yr);
+    singleValueFilter(wardProp, wardIndices, filterAttributes, 'yr', yr);
+    // Refresh Filters
+    filterUpdate();
+  });
+
+  // All Years Button
+  document.getElementById('all_years_btn').addEventListener('click', function(e) {
+    // Update Filter Control's Display
+    document.getElementById('active-year').innerText = 'All Years';
+    // Single Incidents
+    filter_year = ['!=', ['number', ['get', 'yr']], 25];
+    // Incident Clusters
+    filterYearCluster = function(i) {
+      return true;
+    }
+    // Choropleth layers
+    allFilter(psaProp, psaIndices, filterAttributes, 'yr');
+    allFilter(censusTractProp, censusTractIndices, filterAttributes, 'yr');
+    allFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'yr');
+    allFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'yr');
+    allFilter(wardProp, wardIndices, filterAttributes, 'yr');
+    // Refresh Filters
+    filterUpdate();
+  });
+
+  // Hour Slider
+  document.getElementById('time_slider').addEventListener('input', function(e) {
+    var hour = parseInt(e.target.value);
+    // Update Filter Control's Display
+    var ampm = hour >= 12 ? 'PM' : 'AM';
+    var hour12 = hour % 12 ? hour % 12 : 12;
+    document.getElementById('active-hour').innerText = hour12 + ampm;
+    // Single Incidents
+    filter_hour = ['==', ['number', ['get', 'hr']], hour];
+    // Incident Clusters
+    filterHourCluster = function(i) {
+      return i.properties.hr === hour;
+    }
+    // Choropleth layers
+    singleValueFilter(psaProp, psaIndices, filterAttributes, 'hr', hour);
+    singleValueFilter(censusTractProp, censusTractIndices, filterAttributes, 'hr', hour);
+    singleValueFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'hr', hour);
+    singleValueFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'hr', hour);
+    singleValueFilter(wardProp, wardIndices, filterAttributes, 'hr', hour);
+    // Refresh Filters
+    filterUpdate();
+  });
+
+  // All Time Button
+  document.getElementById('all_time_btn').addEventListener('click', function(e) {
+    // Update Filter Control's Display
+    document.getElementById('active-hour').innerText = 'All Times';
+    // Single Incidents
+    filter_hour = ['!=', ['number', ['get', 'hour']], 25];
+    // Incident Clusters
+    filterHourCluster = function(i) {
+      return true;
+    }
+    // Choropleth layers
+    allFilter(psaProp, psaIndices, filterAttributes, 'hr');
+    allFilter(censusTractProp, censusTractIndices, filterAttributes, 'hr');
+    allFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'hr');
+    allFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'hr');
+    allFilter(wardProp, wardIndices, filterAttributes, 'hr');
+    // Refresh Filters
     filterUpdate();
   });
 
