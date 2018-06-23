@@ -36,7 +36,7 @@ function collectProperties(polygonGEOJSON, incidentGEOJSON, filterArray) {
   return collectedGEOJSON;
 }
 
-var filterAttributes = ['race', 'race', 'gen', 'age', 'yr', 'mon', 'day', 'hr'];
+var filterAttributes = ['race', 'gen', 'age', 'yr', 'mon', 'day', 'hr'];
 
 var psaProp = collectProperties(psaGEOJSON.responseJSON, sffcGEOJSON.responseJSON, filterAttributes);
 var censusTractProp = collectProperties(censusTractGEOJSON.responseJSON, sffcGEOJSON.responseJSON, filterAttributes);
