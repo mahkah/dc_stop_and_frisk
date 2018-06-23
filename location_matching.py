@@ -28,19 +28,19 @@ def main():
     '''Run the functions defined in this file on DC Stop and Frisk Data'''
     # Read Data
     # From: https://mpdc.dc.gov/node/1310236
-    sf1_df = pd.read_excel('SF_Field Contact_02202018.xlsx', 
+    sf1_df = pd.read_excel('original_data/SF_Field Contact_02202018.xlsx', 
                            names=('incident_type', 'incident_date', 'year', 'data_type', 
                                   'subject_race', 'subject_gender', 'subject_ethnicity', 
                                   'block_address', 'district', 'psa', 'subject_age'))
     
-    sf2_df = pd.read_excel('SF_Field Contact_02202018.xlsx', sheet_name=1,
+    sf2_df = pd.read_excel('original_data/SF_Field Contact_02202018.xlsx', sheet_name=1,
                            names=('incident_date', 'year', 'block_address', 'district', 
                                   'psa', 'incident_type', 'cause', 'data_type', 
                                   'subject_race', 'subject_ethnicity', 
                                   'subject_gender', 'subject_age'))
     
     # From: http://opendata.dc.gov/datasets/block-centroids/data
-    block_df = pd.read_excel('Block_Centroids.xlsx')
+    block_df = pd.read_excel('original_data/Block_Centroids.xlsx')
     block_df.set_index('PSEUDO_OBJECTID', inplace=True, drop=False)
     
     
@@ -58,7 +58,7 @@ def main():
     # Recoding
     sf_located['subject_race_ethn'] = sf_located['subject_race']
     sf_located.loc[sf_located['subject_ethnicity'] == 'Hispanic Or Latino', 'subject_race_ethn'] = 'Hispanic or Latino'
-    recode_dict = {'Asian': 'Other', 'American Indian Or Alaska Native': 'Other', 'Native Hawaiian Or Other Pacific Islander': 'Other'}
+    recode_dict = {'American Indian Or Alaska Native': 'Other', 'Native Hawaiian Or Other Pacific Islander': 'Other'}
     sf_located['subject_race_ethn'].replace(recode_dict, inplace=True)
     
     sf_located['incident_date'] = pd.to_datetime(sf_located['incident_date'])
@@ -76,12 +76,29 @@ def main():
     
     
     # Export
-    sf_located.to_csv('SF_Field Contact_02202018_locations.csv', index=False)
+    sf_located.to_csv('transformed_data/SF_Field Contact_02202018_locations.csv', index=False)
     
+    # Minimize geojson file size
     geo_df = sf_located.loc[sf_located['block_id'] > 0]
+#    recode_dict = {'Black': 1, 'White': 2, 'Hispanic or Latino': 3, 'Asian': 4, 'Other': 5, 'Unknown': -1}
+#    geo_df['race'] = geo_df['subject_race_ethn'].map(recode_dict)
+#    recode_dict = {'Male': 1, 'Female': 2, 'Unknown': -1}
+#    geo_df['gen'] = geo_df['subject_gender'].map(recode_dict)
+    geo_df['race'] = geo_df['subject_race_ethn']
+    geo_df['gen'] = geo_df['subject_gender']
+    geo_df['age'] = geo_df['subject_age']
+    recode_dict = {'Juvenile': 0, 'Unknown': -1}
+    geo_df['age'].replace(recode_dict, inplace=True)
+    geo_df['yr'] = geo_df['year']
+    geo_df['mon'] = geo_df['month']
+    geo_df['day'] = geo_df['day']
+    geo_df['hr'] = geo_df['hour']
+    geo_df['idx'] = geo_df.index
 
-    geojson = df_to_geojson(geo_df, cols, lat='Y', lon='X') 
-    output_filename = 'SF_Field_Contact_02202018_locations.geojson'
+    
+    
+    geojson = df_to_geojson(geo_df, ['race', 'gen', 'age', 'yr', 'mon', 'day', 'hr', 'idx'], lat='Y', lon='X') 
+    output_filename = 'transformed_data/SF_Field_Contact_02202018_locations.geojson'
     with open(output_filename, 'w') as output_file:
         output_file.write('')
         json.dump(geojson, output_file, indent=2)
