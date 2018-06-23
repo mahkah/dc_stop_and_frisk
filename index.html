@@ -172,7 +172,7 @@
   // Load Datasets
   function loadData(filename) {
     return $.ajax({
-      url:"https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/" + filename,
+      url:"https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/transformed_data/" + filename,
       dataType: "json",
       success: console.log(filename + " successfully loaded."),
       error: function (xhr) {
