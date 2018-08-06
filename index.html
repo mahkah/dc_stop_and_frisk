@@ -1,11 +1,12 @@
 <head>
   <meta charset='utf-8' />
-  <title>DC Stop and Frisks</title>
+  <title>DC Stop and Frisk Map</title>
   <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
   <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
   <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-
+  <link href="https://cdn.bootcss.com/noUiSlider/8.5.1/nouislider.min.css" rel="stylesheet">
+  <script src="https://cdn.bootcss.com/noUiSlider/8.5.1/nouislider.js"></script>
   <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
 
   <style>
@@ -20,6 +21,13 @@
     top: 0;
     bottom: 0;
     width: 100%;
+  }
+  /*No UI Slider*/
+  #range-slider {
+    height: 15px;
+    width: 152px;
+    margin: 3px auto 3px;
+    float: right;
   }
   </style>
 </head>
@@ -123,6 +131,7 @@
     <p>Data: <a href='https://mpdc.dc.gov/node/1310236'>Stop and frisk incidents</a> in Washington DC, 2010-2016</p>
 
     <h2>Filters</h2>
+    <!--Race/Ethn Filter-->
     <div class='session' id='ethn_buttons'>
       <h3>Race/Ethnicity</h3>
       <div class='row' id='ethn_filters'>
@@ -140,6 +149,7 @@
         <label for='other'>Other</label>
       </div>
     </div>
+    <!--Gender Filter-->
     <div class='session' id='gender_buttons'>
       <h3>Gender</h3>
       <div class='row' id='gender_filters'>
@@ -151,16 +161,30 @@
         <label for='women'>Women</label>
       </div>
     </div>
+    <!--Age Filter-->
+    <h3>Age: <label id='active-age'>Juveniles and Adults 18-75</label></h3>
+    <input type="checkbox" id="juvenile_age" name="juvenile_age" value="juvenile_age" checked>
+    <label for="juvenile_age">Juveniles</label>
+    <div> <input type="checkbox" id="adult_age" name="adult_age" value="adult_age" checked>
+    <label for="adult_age">Adults</label>
+    <div id="range-slider"></div></div>
+    <div></div>
+    <!--Year Filter-->
     <div class='session' id='sliderbar'>
       <h3>Year: <label id='active-year'>All Years</label></h3>
       <button class='btn' id='all_years_btn'>All Years</button>
       <input id='year_slider' class='row' type='range' min='2010' max='2016' step='1' value='2016'/>
     </div>
+    <!--Hour Filter-->
     <div class='session' id='sliderbar'>
       <h3>Hour: <label id='active-hour'>All Times</label></h3>
       <button class='btn' id='all_time_btn'>All Times</button>
       <input id='time_slider' class='row' type='range' min='0' max='23' step='1' value='22'/>
     </div>
+    <!--Date Slider-->
+    <h3>Date Range: <label id='active-date'>Entire Period</label></h3>
+    <div id="date-slider"></div>
+    <p>Value: <label id ='event-start'>Not moved</label> to <label id ='event-end'>Not moved</label></p>
     <!--
     <h2>Info</h2>
     <div id='pd'><p>Hover over an incident for more information.</p></div>
@@ -174,24 +198,334 @@
   // Config
   mapboxgl.accessToken = 'pk.eyJ1IjoibWFoa2FoIiwiYSI6ImNqZW9zNHBvaTBhc2YzM2x0OWg3aXZ5dTAifQ.F1uwBes6jRJHdwqeSMiA-w';
 
-  // Load Datasets
-  function loadData(filename) {
-    return $.ajax({
-      url:"https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/transformed_data/" + filename,
+  // Initialize Datasets
+  // Filters
+  /* Define attributes to collect from individual incidents for filtering
+  active: Whether a not a filter is being used
+  mapboxFilter: Name of mapbox filter using built-in expressions
+  clusterFilterFunction: Function used to filter the cluster layer
+  choroplethFilterFunction: Function used to filter the choropleth layer*/
+  var filterAttributes = {
+    'race': {
+      'active': false,
+      'mapboxFilter': ['!=', ['string', ['get', 'race']], 'placeholder']
+    },
+    'gen': {
+      'active': false,
+      'mapboxFilter': ['!=', ['string', ['get', 'gen']], 'placeholder']
+    },
+    'age': {
+      'active': false,
+      'mapboxFilter': ['!=', ['number', ['get', 'age']], -10]
+    },
+    'yr': {
+      'active': false,
+      'mapboxFilter': ['!=', ['number', ['get', 'yr']], 25]
+    },
+    'mon': {
+      'active': false,
+      'mapboxFilter': ''
+    },
+    'day': {
+      'active': false,
+      'mapboxFilter': ''
+    },
+    'hr': {
+      'active': false,
+      'mapboxFilter': ['!=', ['number', ['get', 'hr']], 25]
+    },
+  };
+
+  // Incident Data
+  /*  Holds information about individual incidents and geographic features
+  layerNames: Array containing names of Mapbox layer(s)
+  label: Name of layer displayed on the map
+  polygon: Whether or not a layer is a set of choropleth polygons
+  geojsonFilename: Data file name
+  defaultLayer: Whether or not is enabled by default
+  mapboxSourceName: Name of mapbox source
+  geojson: Geojson file containing incident data
+  indices: Mutable sets to keep track of individual filtered incidents
+  maxSFFC: Upper bound for choropleth color range
+  */
+  var mapLayers = {
+    'indiv': {
+      'layerNames': ['Individual Incidents', 'clusters', 'Individual Incidents Count'],
+      'label': 'Individual Incidents',
+      'polygon': false,
+      'geojsonFilename': 'SF_Field_Contact_02202018_locations.geojson',
+      'defaultLayer': true,
+      'mapboxSourceName': 'sffc_cluster'
+    },
+    'ward': {
+      'layerNames': ['Wards'],
+      'label': 'Wards',
+      'polygon': true,
+      'geojsonFilename': 'Ward_from_2012_collected.geojson',
+      'defaultLayer': false,
+      'mapboxSourceName': 'wards'
+    },
+    'neighborhood': {
+      'layerNames': ['Neighborhoods'],
+      'label': 'Neighborhoods',
+      'polygon': true,
+      'geojsonFilename': 'Neighborhood_Clusters_collected.geojson',
+      'defaultLayer': false,
+      'mapboxSourceName': 'neighborhoods'
+    },
+    'policeSector': {
+      'layerNames': ['Police Sectors'],
+      'label': 'Police Sectors',
+      'polygon': true,
+      'geojsonFilename': 'Police_Sectors_collected.geojson',
+      'defaultLayer': false,
+      'mapboxSourceName': 'policeSectors'
+    },
+    'psa': {
+      'layerNames': ['Police Service Areas'],
+      'label': 'Police Service Areas',
+      'polygon': true,
+      'geojsonFilename': 'Police_Service_Areas_collected.geojson',
+      'defaultLayer': false,
+      'mapboxSourceName': 'psas'
+    },
+    'censusTract': {
+      'layerNames': ['Census Tracts'],
+      'label': 'Census Tracts',
+      'polygon': true,
+      'geojsonFilename': 'Census_Tracts_in_2010_collected.geojson',
+      'defaultLayer': false,
+      'mapboxSourceName': 'censusTracts'
+    }
+  };
+
+  // Load data and build data driven properties of mapLayers
+  Object.keys(mapLayers).forEach(function(key) {
+    $.ajax({
+      url:"https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/transformed_data/" + mapLayers[key].geojsonFilename,
       dataType: "json",
-      success: console.log(filename + " successfully loaded."),
+      success: function(result) {
+        // geojson Property
+        mapLayers[key].geojson = result;
+        // Polygon only properties
+        if(mapLayers[key].polygon === true) {
+          mapLayers[key].maxSFFC = 0;
+          mapLayers[key].indices = {}
+        }
+        console.log(mapLayers[key].geojsonFilename + " successfully loaded.");
+      },
       error: function (xhr) {
-        alert(xhr.statusText)
+        alert(xhr.statusText);
       }
     });
+  });
+  var activePolygonLayer = ''
+
+  /** Takes the intersection of two or more sets. */
+  function intersect(sets) {
+    var minSize = sets[0].size;
+    var shortSetIndex = 0;
+    for (var i = 1; i < sets.length; i++) {
+      if (sets[i].size < minSize) {
+        minSize = sets[i].size;
+        shortSetIndex = i;
+      }
+    }
+    // var shortSetIndex = sets.reduce(function(minI,el,i,arr) {return el.size<arr[minI].size ? i : minI;}, 0);
+    var shortSet = sets.splice(shortSetIndex, 1);
+    var count = sets.length;
+    var result = new Set(shortSet[0]);
+    shortSet[0].forEach(item => {
+      var i = count;
+      var allHave = true;
+      while (i--){
+        allHave = sets[i].has(item)
+        if (!allHave) { break }
+      }
+      if (!allHave) {
+        result.delete(item);
+      }
+    })
+    return result;
   }
 
-  var psaGEOJSON = loadData("Police_Service_Areas_collected.geojson");
-  var censusTractGEOJSON = loadData("Census_Tracts_in_2010_collected.geojson");
-  var neighborhoodGEOJSON = loadData("Neighborhood_Clusters_collected.geojson");
-  var policeSectorGEOJSON = loadData("Police_Sectors_collected.geojson");
-  var wardGEOJSON = loadData("Ward_from_2012_collected.geojson");
-  var sffcGEOJSON = loadData("SF_Field_Contact_02202018_locations.geojson");
+  /** Updates the specified choropleth layer according to the new map layers. */
+  function refreshChoropleth(key) {
+    for (var i = 0; i < mapLayers[key].geojson.features.length; i++) {
+      var indicesSets = [];
+      Object.keys(filterAttributes).forEach( function(attribute) {
+        if (filterAttributes[attribute].active) {indicesSets.push(mapLayers[key].indices[attribute][i]);}
+      });
+      if (indicesSets.length === 0) {
+        var intersection_indices = new Set(Array.apply(null, {length: mapLayers[key].geojson.features[i].properties.race.length}).map(Number.call, Number));
+      } else if (indicesSets.length === 1) {
+        var intersection_indices = indicesSets[0]
+      } else {
+        var intersection_indices = intersect(indicesSets);
+      }
+      mapLayers[key].geojson.features[i].properties.sffcCount = intersection_indices.size;
+    }
+    map.getSource(mapLayers[key].mapboxSourceName).setData(mapLayers[key].geojson);
+    //Color Rescaling
+    // if(true === false) {
+    //   var maxSFFC = 0;
+    //   for (var i = 0; i < mapLayers[key].geojson.features.length; i++) {
+    //     if (mapLayers[key].geojson.features[i].properties.sffcCount > maxSFFC) {
+    //       maxSFFC = mapLayers[key].geojson.features[i].properties.sffcCount;
+    //     }
+    //   }
+    //   var colorRange = []
+    //   for (var i = 0; i < 20; i++) {
+    //     colorRange[i] = maxSFFC * (i / 19);
+    //   }
+    //   map.setPaintProperty(mapLayers[key].layerNames[0], 'fill-color', [
+    //     'interpolate',
+    //     ['linear'],
+    //     ['get', 'sffcCount'],
+    //     colorRange[0], 'rgb(253,231,37)',
+    //     colorRange[1], 'rgb(220,228,23)',
+    //     colorRange[2], 'rgb(184,222,41)',
+    //     colorRange[3], 'rgb(147,216,64)',
+    //     colorRange[4], 'rgb(116,208,85)',
+    //     colorRange[5], 'rgb(85,198,102)',
+    //     colorRange[6], 'rgb(60,188,117)',
+    //     colorRange[7], 'rgb(41,175,127)',
+    //     colorRange[8], 'rgb(33,163,134)',
+    //     colorRange[9], 'rgb(32,150,139)',
+    //     colorRange[10], 'rgb(35,137,141)',
+    //     colorRange[11], 'rgb(40,124,142)',
+    //     colorRange[12], 'rgb(45,112,142)',
+    //     colorRange[13], 'rgb(50,99,142)',
+    //     colorRange[14], 'rgb(57,84,140)',
+    //     colorRange[15], 'rgb(63,71,136)',
+    //     colorRange[16], 'rgb(69,55,129)',
+    //     colorRange[17], 'rgb(72,39,119)',
+    //     colorRange[18], 'rgb(72,21,104)',
+    //     colorRange[19], 'rgb(68,13,83)'
+    //   ]);
+    // }
+  }
+
+  /** Updates the individual layers according to the new map layers. */
+  function filterUpdate() {
+    // Single incidents
+    map.setFilter('Individual Incidents', ['all', filterAttributes.race.mapboxFilter, filterAttributes.gen.mapboxFilter, filterAttributes.age.mapboxFilter, filterAttributes.yr.mapboxFilter, filterAttributes.hr.mapboxFilter]);
+    // Cluster Layer
+    var clusterData = mapLayers.indiv.geojson.features;
+    Object.keys(filterAttributes).forEach( function(attribute) {
+      if(filterAttributes[attribute].active) {clusterData = clusterData.filter(filterAttributes[attribute].clusterFilterFunction);}
+    });
+    var clusterData = turf.featureCollection(clusterData);
+    map.getSource('sffc_cluster').setData(clusterData);
+    // Choropleth layers
+    if(activePolygonLayer) {refreshChoropleth(activePolygonLayer);}
+  }
+
+  //** Modifies the sets of indices to match a particular variable */
+  function singleValueFilter(key, attribute, value) {
+    mapLayers[key].indices[attribute] = [];
+    for (var i = 0; i < mapLayers[key].geojson.features.length; i++) {
+      mapLayers[key].indices[attribute][i] = new Set();
+      var j = mapLayers[key].geojson.features[i].properties[attribute].indexOf(value);
+      while (j != -1) {
+        mapLayers[key].indices[attribute][i].add(j);
+        j = mapLayers[key].geojson.features[i].properties[attribute].indexOf(value, j + 1);
+      }
+    }
+  }
+
+  //** Modifies the sets of indices according to a function */
+  function functionValueFilter(key, attribute) {
+    mapLayers[key].indices[attribute] = [];
+    for (var i = 0; i < mapLayers[key].geojson.features.length; i++) {
+      mapLayers[key].indices[attribute][i] = new Set();
+      var j = mapLayers[key].geojson.features[i].properties[attribute].findIndex(filterAttributes[attribute].choroplethFilterFunction);
+      var k = j;
+      while (k != -1) {
+        mapLayers[key].indices[attribute][i].add(j);
+        k = mapLayers[key].geojson.features[i].properties[attribute].slice(j + 1).findIndex(filterAttributes[attribute].choroplethFilterFunction);
+        j = j + 1 + k;
+      }
+    }
+  }
+
+  // Build HTML Elements
+  var rangeSlider = document.getElementById('range-slider');
+  noUiSlider.create(rangeSlider, {
+    range: {
+      'min': 18,
+      'max': 75
+    },
+    start: [ 18, 75 ],
+    step: 1,
+    margin: 0,
+    connect: true,
+    direction: 'ltr',
+    orientation: 'horizontal',
+    behaviour: 'tap-drag'
+  });
+
+  var dateSlider = document.getElementById('date-slider');
+  function timestamp(str){
+    return new Date(str).getTime();
+  }
+  noUiSlider.create(dateSlider, {
+    range: {
+      'min': timestamp('2010'),
+      'max': timestamp('2011')
+    },
+    start: [ timestamp('2010'), timestamp('2011') ],
+    step: 7 * 24 * 60 * 60 * 1000,
+    connect: true,
+    direction: 'ltr',
+    orientation: 'horizontal',
+    behaviour: 'tap-drag'
+  });
+
+  var dateValues = [
+  	document.getElementById('event-start'),
+  	document.getElementById('event-end')
+  ];
+
+  dateSlider.noUiSlider.on('update', function( values, handle ) {
+    console.log(values);
+    console.log(handle);
+    console.log(dateValues[handle].innerHTML);
+  	dateValues[handle].innerHTML = formatDate(new Date(+values[handle]));
+  });
+
+
+
+  // Append a suffix to dates.
+  // Example: 23 => 23rd, 1 => 1st.
+  function nth (d) {
+    if(d>3 && d<21) return 'th';
+    switch (d % 10) {
+      case 1:  return "st";
+      case 2:  return "nd";
+      case 3:  return "rd";
+      default: return "th";
+    }
+  }
+
+  // Create a string representation of the date.
+  function formatDate (date) {
+    var weekdays = [
+    		"Sunday", "Monday", "Tuesday",
+    		"Wednesday", "Thursday", "Friday",
+    		"Saturday"
+    	];
+    var	months = [
+    		"January", "February", "March",
+    		"April", "May", "June", "July",
+    		"August", "September", "October",
+    		"November", "December"
+    	];
+    return weekdays[date.getDay()] + ", " +
+      date.getDate() + nth(date.getDate()) + " " +
+      months[date.getMonth()] + " " +
+      date.getFullYear();
+  }
 
   // Load map
   var map = new mapboxgl.Map({
@@ -203,25 +537,20 @@
 
   // Data Layers
   map.on('load', function() {
-    var filter_ethn = ['!=', ['string', ['get', 'race']], 'placeholder'];
-    var filter_gen = ['!=', ['string', ['get', 'gen']], 'placeholder'];
-    var filter_hour = ['!=', ['number', ['get', 'hr']], 25];
-    var filter_year = ['!=', ['number', ['get', 'yr']], 25];
-
     // Incident Cluster Layer
-    map.addSource('sffc_cluster', {
+    map.addSource(mapLayers.indiv.mapboxSourceName, {
       type: 'geojson',
-      data: sffcGEOJSON.responseJSON,
+      data: mapLayers.indiv.geojson,
       cluster: true,
       clusterMaxZoom: 29,
       clusterRadius: 30
     });
     // Single Incidents
     map.addLayer({
-      id: 'Individual Incidents',
+      id: mapLayers.indiv.layerNames[0],
       type: 'circle',
-      source: 'sffc_cluster',
-      filter: ['all', filter_ethn, filter_gen, filter_year, filter_hour],
+      source: mapLayers.indiv.mapboxSourceName,
+      filter: ['all', filterAttributes.race.mapboxFilter, filterAttributes.gen.mapboxFilter, filterAttributes.age.mapboxFilter, filterAttributes.yr.mapboxFilter, filterAttributes.hr.mapboxFilter],
       paint: {
         "circle-color": "rgb(253,231,37)",
         "circle-radius": 4,
@@ -233,9 +562,9 @@
   );
   // Clusters
   map.addLayer({
-    id: "clusters",
+    id: mapLayers.indiv.layerNames[1],
     type: "circle",
-    source: "sffc_cluster",
+    source: mapLayers.indiv.mapboxSourceName,
     filter:  ['all', ["has", "point_count"]],
     paint: {
       "circle-color": [
@@ -293,9 +622,9 @@
   });
   // Cluster Labels
   map.addLayer({
-    id: "Individual Incidents Count",
+    id: mapLayers.indiv.layerNames[2],
     type: "symbol",
-    source: "sffc_cluster",
+    source: mapLayers.indiv.mapboxSourceName,
     filter:  ['all', ["has", "point_count"]],
     layout: {
       "text-field": "{point_count_abbreviated}",
@@ -303,281 +632,82 @@
       "text-size": 12
     }
   });
-  // Cluster Layer Default filters
-  var filterEthnCluster = function(i) {
-    return true;
-  }
-  var filterGenderCluster = function(i) {
-    return true;
-  }
-  var filterHourCluster = function(i) {
-    return true;
-  }
-  var filterYearCluster = function(i) {
-    return true;
-  }
-
 
   // Choropleth Maps
-  /** Appends an array of attributes on all the incidents that occured in each polygon. */
-  function collectProperties(polygonGEOJSON, incidentGEOJSON, filterArray) {
-    var collectedGEOJSON = turf.collect(polygonGEOJSON, incidentGEOJSON, filterArray[0], filterArray[0]);
-    for (var i = 1; i < filterArray.length; i++) {
-      collectedGEOJSON = turf.collect(collectedGEOJSON, incidentGEOJSON, filterArray[i], filterArray[i]);
-    }
-    return collectedGEOJSON;
-  }
-
-  /** Initializes the sets used for filtering incidents occuring within each polygon. */
-  function initializeIndices(collectedGEOJSON, filterArray) {
-    var initialIndex = [];
-    for (var i = 0; i < collectedGEOJSON.features.length; i++) {
-      initialIndex[i] = new Set(Array.apply(null, {length: collectedGEOJSON.features[i].properties.hr.length}).map(Number.call, Number));
-    }
-    var indicesSetsArray = [initialIndex];
-    for (var j = 1; j < filterArray.length; j++) {
-      indicesSetsArray.push(initialIndex);
-    }
-    return indicesSetsArray;
-  }
+  Object.keys(mapLayers).forEach(function(key) {
+    if(mapLayers[key].polygon === true) {plotChoropleth(key);}
+  });
 
   /** Plots choropleth maps. */
-  function plotChoropleth(collectedGEOJSON, sourceName, layerName) {
-    var maxSFFC = 0;
-    for (var i = 0; i < collectedGEOJSON.features.length; i++) {
-      collectedGEOJSON.features[i].properties.sffcCount = collectedGEOJSON.features[i].properties.hr.length;
-      if (collectedGEOJSON.features[i].properties.sffcCount > maxSFFC) {
-        maxSFFC = collectedGEOJSON.features[i].properties.sffcCount;
+  async function plotChoropleth(key) {
+    for (var i = 0; i < mapLayers[key].geojson.features.length; i++) {
+      mapLayers[key].geojson.features[i].properties.sffcCount = mapLayers[key].geojson.features[i].properties.hr.length;
+      if (mapLayers[key].geojson.features[i].properties.sffcCount > mapLayers[key].maxSFFC) {
+        mapLayers[key].maxSFFC = mapLayers[key].geojson.features[i].properties.sffcCount;
       }
     }
-    var colorRange = [];
+    mapLayers[key].maxSFFCUnfiltered = mapLayers[key].maxSFFC;
+    mapLayers[key].colorRange = [];
     for (var i = 0; i < 20; i++) {
-      colorRange[i] = maxSFFC * (i / 19);
+      mapLayers[key].colorRange[i] = mapLayers[key].maxSFFC * (i / 19);
     }
-    map.addSource(sourceName, {
+    map.addSource(mapLayers[key].mapboxSourceName, {
       type: 'geojson',
-      data: collectedGEOJSON
+      data: mapLayers[key].geojson
     });
     map.addLayer({
-      'id': layerName,
+      'id': mapLayers[key].layerNames[0],
       'type': 'fill',
-      'source': sourceName,
+      'source': mapLayers[key].mapboxSourceName,
       'paint': {
         'fill-color': [
           'interpolate',
           ['linear'],
           ['get', 'sffcCount'],
-          colorRange[0], 'rgb(253,231,37)',
-          colorRange[1], 'rgb(220,228,23)',
-          colorRange[2], 'rgb(184,222,41)',
-          colorRange[3], 'rgb(147,216,64)',
-          colorRange[4], 'rgb(116,208,85)',
-          colorRange[5], 'rgb(85,198,102)',
-          colorRange[6], 'rgb(60,188,117)',
-          colorRange[7], 'rgb(41,175,127)',
-          colorRange[8], 'rgb(33,163,134)',
-          colorRange[9], 'rgb(32,150,139)',
-          colorRange[10], 'rgb(35,137,141)',
-          colorRange[11], 'rgb(40,124,142)',
-          colorRange[12], 'rgb(45,112,142)',
-          colorRange[13], 'rgb(50,99,142)',
-          colorRange[14], 'rgb(57,84,140)',
-          colorRange[15], 'rgb(63,71,136)',
-          colorRange[16], 'rgb(69,55,129)',
-          colorRange[17], 'rgb(72,39,119)',
-          colorRange[18], 'rgb(72,21,104)',
-          colorRange[19], 'rgb(68,13,83)'
+          mapLayers[key].colorRange[0], 'rgb(253,231,37)',
+          mapLayers[key].colorRange[1], 'rgb(220,228,23)',
+          mapLayers[key].colorRange[2], 'rgb(184,222,41)',
+          mapLayers[key].colorRange[3], 'rgb(147,216,64)',
+          mapLayers[key].colorRange[4], 'rgb(116,208,85)',
+          mapLayers[key].colorRange[5], 'rgb(85,198,102)',
+          mapLayers[key].colorRange[6], 'rgb(60,188,117)',
+          mapLayers[key].colorRange[7], 'rgb(41,175,127)',
+          mapLayers[key].colorRange[8], 'rgb(33,163,134)',
+          mapLayers[key].colorRange[9], 'rgb(32,150,139)',
+          mapLayers[key].colorRange[10], 'rgb(35,137,141)',
+          mapLayers[key].colorRange[11], 'rgb(40,124,142)',
+          mapLayers[key].colorRange[12], 'rgb(45,112,142)',
+          mapLayers[key].colorRange[13], 'rgb(50,99,142)',
+          mapLayers[key].colorRange[14], 'rgb(57,84,140)',
+          mapLayers[key].colorRange[15], 'rgb(63,71,136)',
+          mapLayers[key].colorRange[16], 'rgb(69,55,129)',
+          mapLayers[key].colorRange[17], 'rgb(72,39,119)',
+          mapLayers[key].colorRange[18], 'rgb(72,21,104)',
+          mapLayers[key].colorRange[19], 'rgb(68,13,83)'
         ],
-        'fill-opacity': 0.7
+        'fill-opacity': 0.6,
+        'fill-outline-color': 'black'
       }
     }, 'Individual Incidents')
-    map.setLayoutProperty(layerName, 'visibility', 'none');
+    map.setLayoutProperty(mapLayers[key].layerNames[0], 'visibility', 'none');
   }
-
-  // Define attributes to collect from individual incidents for filtering
-  var filterAttributes = ['race', 'gen', 'age', 'yr', 'mon', 'day', 'hr'];
-  // Keep track of whether or not we actually need to filter on each attribute
-  var filterOn = [];
-  for (var i = 0; i < filterAttributes.length; ++i) {
-    filterOn.push(false)
-  }
-  // Police Service Area Layer
-  var psaProp = psaGEOJSON.responseJSON;
-  var psaIndices = initializeIndices(psaProp, filterAttributes);
-  plotChoropleth(psaProp, 'psas', 'Police Service Areas');
-  // Census Tract Layer
-  var censusTractProp = censusTractGEOJSON.responseJSON;
-  var censusTractIndices = initializeIndices(censusTractProp, filterAttributes);
-  plotChoropleth(censusTractProp, 'censusTracts', 'Census Tracts');
-  // Neighborhood Layer
-  var neighborhoodProp = neighborhoodGEOJSON.responseJSON;
-  var neighborhoodIndices = initializeIndices(neighborhoodProp, filterAttributes);
-  plotChoropleth(neighborhoodProp, 'neighborhoods', 'Neighborhoods');
-  // Police Sector Layer
-  var policeSectorProp = policeSectorGEOJSON.responseJSON;
-  var policeSectorIndices = initializeIndices(policeSectorProp, filterAttributes);
-  plotChoropleth(policeSectorProp, 'policeSectors', 'Police Sectors');
-  // Ward Layer
-  var wardProp = wardGEOJSON.responseJSON;
-  var wardIndices = initializeIndices(wardProp, filterAttributes);
-  plotChoropleth(wardProp, 'wards', 'Wards');
-
-
 
   // Filters
-  /** Takes the intersection of two or more sets. */
-  function intersect(sets) {
-    var minSize = sets[0].size;
-    var shortSetIndex = 0;
-    for (var i = 1; i < sets.length; i++) {
-      if (sets[i].size < minSize) {
-        minSize = sets[i].size;
-        shortSetIndex = i;
-      }
-    }
-    // var shortSetIndex = sets.reduce(function(minI,el,i,arr) {return el.size<arr[minI].size ? i : minI;}, 0);
-    var shortSet = sets.splice(shortSetIndex, 1);
-    var count = sets.length;
-    var result = new Set(shortSet[0]);
-    shortSet[0].forEach(item => {
-      var i = count;
-      var allHave = true;
-      while (i--){
-        allHave = sets[i].has(item)
-        if (!allHave) { break }
-      }
-      if (!allHave) {
-        result.delete(item);
-      }
-    })
-    return result;
-  }
-
-  /** Updates choropleth map layers. */
-  function updateChoropleth(collectedGEOJSON, indicesSetsArray, filterArray, sourceName, layerName) {
-    var maxSFFC = 0;
-    for (var i = 0; i < collectedGEOJSON.features.length; i++) {
-      var indicesSets = [];
-      for (var j = 0; j < filterArray.length; j++) {
-        if (filterOn[j]) { indicesSets.push(indicesSetsArray[j][i]) }
-      }
-      if (indicesSets.length === 0) {
-        var intersection_indices = indicesSetsArray[0][i]
-      } else if (indicesSets.length === 1) {
-        var intersection_indices = indicesSets[0]
-      } else {
-        var intersection_indices = intersect(indicesSets);
-      }
-      collectedGEOJSON.features[i].properties.sffcCount = intersection_indices.size;
-
-      if (collectedGEOJSON.features[i].properties.sffcCount > maxSFFC) {
-        maxSFFC = collectedGEOJSON.features[i].properties.sffcCount;
-      }
-    }
-    var colorRange = []
-    for (var i = 0; i < 20; i++) {
-      colorRange[i] = maxSFFC * (i / 19);
-    }
-    map.getSource(sourceName).setData(collectedGEOJSON);
-    map.setPaintProperty(layerName, 'fill-color', [
-      'interpolate',
-      ['linear'],
-      ['get', 'sffcCount'],
-      colorRange[0], 'rgb(253,231,37)',
-      colorRange[1], 'rgb(220,228,23)',
-      colorRange[2], 'rgb(184,222,41)',
-      colorRange[3], 'rgb(147,216,64)',
-      colorRange[4], 'rgb(116,208,85)',
-      colorRange[5], 'rgb(85,198,102)',
-      colorRange[6], 'rgb(60,188,117)',
-      colorRange[7], 'rgb(41,175,127)',
-      colorRange[8], 'rgb(33,163,134)',
-      colorRange[9], 'rgb(32,150,139)',
-      colorRange[10], 'rgb(35,137,141)',
-      colorRange[11], 'rgb(40,124,142)',
-      colorRange[12], 'rgb(45,112,142)',
-      colorRange[13], 'rgb(50,99,142)',
-      colorRange[14], 'rgb(57,84,140)',
-      colorRange[15], 'rgb(63,71,136)',
-      colorRange[16], 'rgb(69,55,129)',
-      colorRange[17], 'rgb(72,39,119)',
-      colorRange[18], 'rgb(72,21,104)',
-      colorRange[19], 'rgb(68,13,83)'
-    ]);
-  }
-
-  /** Updates the filters for all map layers. */
-  function filterUpdate() {
-    // Single incidents
-    map.setFilter('Individual Incidents', ['all', filter_ethn, filter_gen, filter_year, filter_hour]);
-    // Cluster Layer
-    var clusterData = sffcGEOJSON.responseJSON.features.filter(filterEthnCluster);
-    var clusterData = clusterData.filter(filterGenderCluster);
-    var clusterData = clusterData.filter(filterYearCluster);
-    var clusterData = clusterData.filter(filterHourCluster);
-    var clusterData = turf.featureCollection(clusterData);
-    map.getSource('sffc_cluster').setData(clusterData);
-    // Choropleth layers
-    updateChoropleth(psaProp, psaIndices, filterAttributes, 'psas', 'Police Service Areas');
-    updateChoropleth(censusTractProp, censusTractIndices, filterAttributes, 'censusTracts', 'Census Tracts');
-    updateChoropleth(neighborhoodProp, neighborhoodIndices, filterAttributes, 'neighborhoods', 'Neighborhoods');
-    updateChoropleth(policeSectorProp, policeSectorIndices, filterAttributes, 'policeSectors', 'Police Sectors');
-    updateChoropleth(wardProp, wardIndices, filterAttributes, 'wards', 'Wards');
-  }
-
-  //** Resets the sets of indices to include all incidents */
-  function allFilter(collectedGEOJSON, indicesSetsArray, filterArray, attribute) {
-    indicesSetsArray[filterArray.indexOf(attribute)] = [];
-    for (var i = 0; i < collectedGEOJSON.features.length; i++) {
-      indicesSetsArray[filterArray.indexOf(attribute)][i] = new Set(Array.apply(null, {length: collectedGEOJSON.features[i].properties.hr.length}).map(Number.call, Number));;
-    }
-    filterOn[filterArray.indexOf(attribute)] = false;
-  }
-
-  //** Modifies the sets of indices to match a particular variable */
-  function singleValueFilter(collectedGEOJSON, indicesSetsArray, filterArray, attribute, value) {
-    var filterNumber = filterArray.indexOf(attribute)
-    indicesSetsArray[filterNumber] = [];
-    for (var i = 0; i < collectedGEOJSON.features.length; i++) {
-      indicesSetsArray[filterNumber][i] = new Set();
-      var j = collectedGEOJSON.features[i].properties[attribute].indexOf(value);
-      while (j != -1) {
-        indicesSetsArray[filterNumber][i].add(j);
-        j = collectedGEOJSON.features[i].properties[attribute].indexOf(value, j + 1);
-      }
-    }
-    filterOn[filterArray.indexOf(attribute)] = true;
-  }
-
   // Ethnicity Filter
   document.getElementById('ethn_filters').addEventListener('change', function(e) {
     var race = e.target.value;
+    filterAttributes.race.active = race != 'All';
     if (race === 'All') {
       // Single Incidents
-      filter_ethn = ['!=', ['string', ['get', 'race']], 'placeholder'];
-      // Incident Clusters
-      filterEthnCluster = function(i) {
-        return true;
-      }
-      // Choropleth layers
-      allFilter(psaProp, psaIndices, filterAttributes, 'race');
-      allFilter(censusTractProp, censusTractIndices, filterAttributes, 'race');
-      allFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'race');
-      allFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'race');
-      allFilter(wardProp, wardIndices, filterAttributes, 'race');
+      filterAttributes.race.mapboxFilter = ['!=', ['string', ['get', 'race']], 'placeholder'];
     } else {
       // Single Incidents
-      filter_ethn = ['match', ['get', 'race'], race, true, false];
-      // Incident Clusters
-      filterEthnCluster = function(i) {
-        return i.properties.race === race;
-      }
+      filterAttributes.race.mapboxFilter = ['match', ['get', 'race'], race, true, false];
+      filterAttributes.race.clusterFilterFunction = function(i) {return i.properties.race === race;}
       // Choropleth layers
-      singleValueFilter(psaProp, psaIndices, filterAttributes, 'race', race);
-      singleValueFilter(censusTractProp, censusTractIndices, filterAttributes, 'race', race);
-      singleValueFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'race', race);
-      singleValueFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'race', race);
-      singleValueFilter(wardProp, wardIndices, filterAttributes, 'race', race);
+      Object.keys(mapLayers).forEach(function(key) {
+        if(mapLayers[key].polygon) {singleValueFilter(key, 'race', race);}
+      });
     }
     filterUpdate();
   });
@@ -585,73 +715,126 @@
   // Gender Filter
   document.getElementById('gender_filters').addEventListener('change', function(e) {
     var gen = e.target.value;
+    filterAttributes.gen.active = gen != 'All';
     if (gen === 'All') {
       // Single Incidents
-      filter_gen = ['!=', ['string', ['get', 'gen']], 'placeholder'];
-      // Incident Clusters
-      filterGenderCluster = function(i) {
-        return true;
-      }
-      // Choropleth layers
-      allFilter(psaProp, psaIndices, filterAttributes, 'gen');
-      allFilter(censusTractProp, censusTractIndices, filterAttributes, 'gen');
-      allFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'gen');
-      allFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'gen');
-      allFilter(wardProp, wardIndices, filterAttributes, 'gen');
+      filterAttributes.gen.mapboxFilter = ['!=', ['string', ['get', 'gen']], 'placeholder'];
     } else {
       // Single Incidents
-      filter_gen = ['match', ['get', 'gen'], gen, true, false];
-      // Incident Clusters
-      filterGenderCluster = function(i) {
-        return i.properties.gen === gen;
-      }
+      filterAttributes.gen.mapboxFilter = ['match', ['get', 'gen'], gen, true, false];
+      filterAttributes.gen.clusterFilterFunction = function(i) {return i.properties.gen === gen;}
       // Choropleth layers
-      singleValueFilter(psaProp, psaIndices, filterAttributes, 'gen', gen);
-      singleValueFilter(censusTractProp, censusTractIndices, filterAttributes, 'gen', gen);
-      singleValueFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'gen', gen);
-      singleValueFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'gen', gen);
-      singleValueFilter(wardProp, wardIndices, filterAttributes, 'gen', gen);
+      Object.keys(mapLayers).forEach(function(key) {
+        if(mapLayers[key].polygon === true) {singleValueFilter(key, 'gen', gen);}
+      });
     }
     filterUpdate();
   });
 
+  // Age Fliter
+  document.getElementById('juvenile_age').addEventListener('change', ageFilter);
+  document.getElementById('adult_age').addEventListener('change', ageFilter);
+  rangeSlider.noUiSlider.on('update', ageFilterText);
+  rangeSlider.noUiSlider.on('change', function() {
+    document.getElementById("adult_age").checked = true;
+    ageFilter();
+  });
+
+  /** Updates the age label filter displayed in HTML*/
+  function ageFilterText() {
+    if(document.getElementById('adult_age').checked) {
+      var ageLowerBound = parseInt(rangeSlider.noUiSlider.get()[0]);
+      var ageUpperBound = parseInt(rangeSlider.noUiSlider.get()[1]);
+      if(document.getElementById('juvenile_age').checked) {document.getElementById('active-age').innerText = 'Juveniles and Adults ' + ageLowerBound + '-' + ageUpperBound;}
+      else {document.getElementById('active-age').innerText = 'Adults ' + ageLowerBound + '-' + ageUpperBound;}
+    }
+    else {
+      if(document.getElementById('juvenile_age').checked) {document.getElementById('active-age').innerText = 'Juveniles';}
+      else {document.getElementById('active-age').innerText = 'Select Juveniles and/or Adults';}
+    }
+  }
+
+  /** Applies the age filter*/
+  function ageFilter() {
+    ageFilterText()
+    var ageLowerBound = parseInt(rangeSlider.noUiSlider.get()[0]);
+    var ageUpperBound = parseInt(rangeSlider.noUiSlider.get()[1]);
+    filterAttributes.age.active = !(ageLowerBound === 18 && ageUpperBound === 75 && document.getElementById('adult_age').checked && document.getElementById('juvenile_age').checked);
+    if(document.getElementById('adult_age').checked) {
+      if(document.getElementById('juvenile_age').checked) {
+        // Single Incidents
+        filterAttributes.age.mapboxFilter = ['any', ['==', ['number', ['get', 'age']], 0], ['all', ['>=', ['number', ['get', 'age']], ageLowerBound], ['<=', ['number', ['get', 'age']], ageUpperBound]]];
+        filterAttributes.age.clusterFilterFunction = function(i) { return i.properties.age === 0 || (i.properties.age >= ageLowerBound && i.properties.age <= ageUpperBound);}
+        // Choropleth layers
+        filterAttributes.age.choroplethFilterFunction = function(i) {return i === 0 || (i >= ageLowerBound && i <= ageUpperBound);}
+        Object.keys(mapLayers).forEach(function(key) {
+          if(mapLayers[key].polygon === true) {functionValueFilter(key, 'age');}
+        });
+        // Refresh Filters
+        filterUpdate();
+      } else {
+        // Single Incidents
+        filterAttributes.age.mapboxFilter = ['all', ['>=', ['number', ['get', 'age']], ageLowerBound], ['<=', ['number', ['get', 'age']], ageUpperBound]];
+        filterAttributes.age.clusterFilterFunction = function(i) { return i.properties.age >= ageLowerBound && i.properties.age <= ageUpperBound;}
+        // Choropleth layers
+        filterAttributes.age.choroplethFilterFunction = function(i) { return i >= ageLowerBound && i <= ageUpperBound;}
+        Object.keys(mapLayers).forEach(function(key) {
+          if(mapLayers[key].polygon === true) {functionValueFilter(key, 'age');}
+        });
+        // Refresh Filters
+        filterUpdate();
+      }
+    } else {
+      if(document.getElementById('juvenile_age').checked) {
+        var age = 0
+        // Single Incidents
+        filterAttributes.age.mapboxFilter = ['==', ['number', ['get', 'age']], age];
+        filterAttributes.age.clusterFilterFunction = function(i) {return i.properties.age === age;}
+        // Choropleth layers
+        Object.keys(mapLayers).forEach(function(key) {
+          if(mapLayers[key].polygon) {singleValueFilter(key, 'age', age);}
+        });
+        // Refresh Filters
+        filterUpdate();
+      } else {
+        var age = -10
+        // Single Incidents
+        filterAttributes.age.mapboxFilter = ['==', ['number', ['get', 'age']], age];
+        filterAttributes.age.clusterFilterFunction = function(i) {return i.properties.age === age;}
+        // Choropleth layers
+        Object.keys(mapLayers).forEach(function(key) {
+          if(mapLayers[key].polygon === true) {singleValueFilter(key, 'age', age);}
+        });
+        // Refresh Filters
+        filterUpdate();
+      }
+    }
+  };
+
   // Year Slider
   document.getElementById('year_slider').addEventListener('input', function(e) {
     var yr = parseInt(e.target.value);
+    filterAttributes.yr.active = true;
     // Update Filter Control's Display
     document.getElementById('active-year').innerText = yr;
     // Single Incidents
-    filter_year = ['==', ['number', ['get', 'yr']], yr];
-    // Incident Clusters
-    filterYearCluster = function(i) {
-      return i.properties.yr === yr;
-    }
+    filterAttributes.yr.mapboxFilter = ['==', ['number', ['get', 'yr']], yr];
+    filterAttributes.yr.clusterFilterFunction = function(i) {return i.properties.yr === yr;}
     // Choropleth layers
-    singleValueFilter(psaProp, psaIndices, filterAttributes, 'yr', yr);
-    singleValueFilter(censusTractProp, censusTractIndices, filterAttributes, 'yr', yr);
-    singleValueFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'yr', yr);
-    singleValueFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'yr', yr);
-    singleValueFilter(wardProp, wardIndices, filterAttributes, 'yr', yr);
+    Object.keys(mapLayers).forEach(function(key) {
+      if(mapLayers[key].polygon === true) {singleValueFilter(key, 'yr', yr);}
+    });
     // Refresh Filters
     filterUpdate();
   });
 
   // All Years Button
   document.getElementById('all_years_btn').addEventListener('click', function(e) {
+    filterAttributes.yr.active = false;
     // Update Filter Control's Display
     document.getElementById('active-year').innerText = 'All Years';
     // Single Incidents
-    filter_year = ['!=', ['number', ['get', 'yr']], 25];
-    // Incident Clusters
-    filterYearCluster = function(i) {
-      return true;
-    }
-    // Choropleth layers
-    allFilter(psaProp, psaIndices, filterAttributes, 'yr');
-    allFilter(censusTractProp, censusTractIndices, filterAttributes, 'yr');
-    allFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'yr');
-    allFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'yr');
-    allFilter(wardProp, wardIndices, filterAttributes, 'yr');
+    filterAttributes.yr.mapboxFilter = ['!=', ['number', ['get', 'yr']], 25];
     // Refresh Filters
     filterUpdate();
   });
@@ -659,42 +842,29 @@
   // Hour Slider
   document.getElementById('time_slider').addEventListener('input', function(e) {
     var hour = parseInt(e.target.value);
+    filterAttributes.hr.active = true
     // Update Filter Control's Display
     var ampm = hour >= 12 ? 'PM' : 'AM';
     var hour12 = hour % 12 ? hour % 12 : 12;
     document.getElementById('active-hour').innerText = hour12 + ampm;
     // Single Incidents
-    filter_hour = ['==', ['number', ['get', 'hr']], hour];
-    // Incident Clusters
-    filterHourCluster = function(i) {
-      return i.properties.hr === hour;
-    }
+    filterAttributes.hr.mapboxFilter = ['==', ['number', ['get', 'hr']], hour];
+    filterAttributes.hr.clusterFilterFunction = function(i) {return i.properties.hr === hour;}
     // Choropleth layers
-    singleValueFilter(psaProp, psaIndices, filterAttributes, 'hr', hour);
-    singleValueFilter(censusTractProp, censusTractIndices, filterAttributes, 'hr', hour);
-    singleValueFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'hr', hour);
-    singleValueFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'hr', hour);
-    singleValueFilter(wardProp, wardIndices, filterAttributes, 'hr', hour);
+    Object.keys(mapLayers).forEach(function(key) {
+      if(mapLayers[key].polygon === true) {singleValueFilter(key, 'hr', hour);}
+    });
     // Refresh Filters
     filterUpdate();
   });
 
   // All Time Button
   document.getElementById('all_time_btn').addEventListener('click', function(e) {
+    filterAttributes.hr.active = false;
     // Update Filter Control's Display
     document.getElementById('active-hour').innerText = 'All Times';
     // Single Incidents
-    filter_hour = ['!=', ['number', ['get', 'hour']], 25];
-    // Incident Clusters
-    filterHourCluster = function(i) {
-      return true;
-    }
-    // Choropleth layers
-    allFilter(psaProp, psaIndices, filterAttributes, 'hr');
-    allFilter(censusTractProp, censusTractIndices, filterAttributes, 'hr');
-    allFilter(neighborhoodProp, neighborhoodIndices, filterAttributes, 'hr');
-    allFilter(policeSectorProp, policeSectorIndices, filterAttributes, 'hr');
-    allFilter(wardProp, wardIndices, filterAttributes, 'hr');
+    filterAttributes.hr.mapboxFilter = ['!=', ['number', ['get', 'hour']], 25];
     // Refresh Filters
     filterUpdate();
   });
@@ -732,40 +902,42 @@
 // });
 
 // Layer Selection
-var toggleableLayers = {
-  'Individual Incidents': ['Individual Incidents', 'clusters', 'Individual Incidents Count'],
-  'Wards': ['Wards'],
-  'Neighborhoods': ['Neighborhoods'],
-  'Police Sectors': ['Police Sectors'],
-  'Police Service Areas': ['Police Service Areas'],
-  'Census Tracts': ['Census Tracts']
-  }
-var defaultLayerIds = ['Individual Incidents']
-Object.keys(toggleableLayers).forEach(function(key, index) {
+Object.keys(mapLayers).forEach(function(key) {
   // Build buttons for each layer
   var link = document.createElement('a');
   link.href = '#';
-  if (defaultLayerIds.indexOf(key) >= 0){
+  if (mapLayers[key].defaultLayer === true) {
     link.className = 'active';
   } else {
     link.className = '';
   }
-  link.textContent = key;
+  link.textContent = mapLayers[key].label;
+  link.id = key
   // Add interactivity
-  link.onclick = function (e) {
-    var clickedLayer = toggleableLayers[this.textContent];
+  link.onclick = function(e) {
+    var clickedLayer = this.id;
     e.preventDefault();
     e.stopPropagation();
-    var visibility = map.getLayoutProperty(clickedLayer[0], 'visibility');
+    var visibility = map.getLayoutProperty(mapLayers[clickedLayer].layerNames[0], 'visibility');
     if (visibility === 'visible') {
       this.className = '';
-      for (var i = 0; i < clickedLayer.length; i++) {
-        map.setLayoutProperty(clickedLayer[i], 'visibility', 'none');
+      for (var i = 0; i < mapLayers[clickedLayer].layerNames.length; i++) {
+        map.setLayoutProperty(mapLayers[clickedLayer].layerNames[i], 'visibility', 'none');
       }
+      if(mapLayers[clickedLayer].polygon) {activePolygonLayer = '';}
     } else {
       this.className = 'active';
-      for (var i = 0; i < clickedLayer.length; i++) {
-        map.setLayoutProperty(clickedLayer[i], 'visibility', 'visible');
+      if(mapLayers[clickedLayer].polygon) {refreshChoropleth(clickedLayer);}
+      for (var i = 0; i < mapLayers[clickedLayer].layerNames.length; i++) {
+        map.setLayoutProperty(mapLayers[clickedLayer].layerNames[i], 'visibility', 'visible');
+      }
+      //Turn off the current polygon layer, if applicable
+      if(mapLayers[clickedLayer].polygon === true) {
+        if(activePolygonLayer) {
+          document.getElementById(activePolygonLayer).className = '';
+          map.setLayoutProperty(mapLayers[activePolygonLayer].layerNames[0], 'visibility', 'none');
+        }
+        activePolygonLayer = clickedLayer;
       }
     }
   };
