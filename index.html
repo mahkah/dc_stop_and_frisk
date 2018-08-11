@@ -17,6 +17,32 @@
     font-size: 13px;
     line-height: 14px;
   }
+  h1 {
+    font-size: 22px;
+    line-height: 22px;
+    text-align: center;
+  }
+
+  h2 {
+    font-size: 16px;
+    line-height: 16px;
+    text-align: center;
+  }
+  h3 {
+    font-size: 14px;
+    line-height: 14px;
+    margin-bottom: 1px;
+  }
+  h4 {
+    font-size: 14px;
+    line-height: 10px;
+    text-align: center;
+    margin: 5px;
+  }
+  a {
+    text-decoration: none;
+    color: #2dc4b2;
+  }
   /*Map*/
   #map {
     position: absolute;
@@ -24,62 +50,12 @@
     bottom: 0;
     width: 100%;
   }
-  /*No UI Slider*/
-  #range-slider {
-    height: 15px;
-    width: 153px;
-    margin: 3px auto 3px;
-    float: right;
-  }
-  #date-slider {
-    height: 15px;
-    width: 240px;
-    margin: 3px auto 10px;
-    float: left;
-  }
-  .noUi-base .noUi-handle {
-    margin-left: 10px;
-    width: 10px;
-  }
-  .noUi-handle:before,
-  .noUi-handle:after {
-    left: 0px;
-  }
-
-  </style>
-</head>
-
-<body>
-  <style>
-  h1 {
-    font-size: 20px;
-    line-height: 30px;
-  }
-
-  h2 {
-    font-size: 18px;
-    line-height: 20px;
-  }
-  h3 {
-    font-size: 14px;
-    line-height: 18px;
-    margin-bottom: 10px;
-  }
-  h4 {
-    font-size: 14px;
-    line-height: 10px;
-  }
-  a {
-    text-decoration: none;
-    color: #2dc4b2;
-  }
-
   /*Filter Control Console*/
   #filterConsole {
     position: absolute;
-    width: 240px;
+    width: 260px;
     margin: 10px;
-    padding: 10px 20px;
+    padding: 8px 16px;
     background-color: white;
     border-radius: 3px;
     border: 1px solid rgba(0,0,0,0.4);
@@ -155,44 +131,69 @@
   #menu a.active:hover {
     background: #3074a4;
   }
+  /*Sliders*/
+  #age-slider {
+    height: 15px;
+    width: 185px;
+    margin: 3px auto 3px;
+    float: right;
+  }
+  #date-slider {
+    height: 15px;
+    width: 260px;
+    margin: 3px auto 10px;
+    float: left;
+  }
+  .noUi-base .noUi-handle {
+    margin-left: 10px;
+    width: 10px;
+  }
+  .noUi-handle:before,
+  .noUi-handle:after {
+    left: 0px;
+  }
   </style>
+</head>
+
+<body>
 
   <div id='map'></div>
   <nav id='menu'></nav>
   <div id='filterConsole'>
-    <h1>Metropolitan Police Department Stops</h1>
-    <p><a href='https://mpdc.dc.gov/node/1310236'>Police stops</a> in Washington DC, 2010-2016</p>
-    <p>An additional xxxx stops could not be mapped due to missing, incomplete, or otherwise unknown addresses.</p>
-    <p>Read an <a href='https://github.com/GWarrenn'>analysis of this data</a>, explore <a href='https://github.com/mahkah/dc_stop_and_frisk/tree/master/transformed_data'>the underlying data</a>, or view <a href='https://github.com/mahkah/dc_stop_and_frisk/blob/master/index.html'>this map's source code</a>.</p>
-
-    <h2>Filters</h2>
+    <h1>Police Stops in Washington D.C.</h1>
+    <h2>About the Data</h2>
+    <p>This map visulizes <a href='https://mpdc.dc.gov/node/1310236'>the MPD's stop and frisk dataset</a>, which contains limited information about stops made from 2010 to 2017. Of these, xxxx stops could not be mapped due to missing or incomplete addresses.</p>
+    <p>Read an <a href='https://github.com/GWarrenn'>analysis of this data</a>, explore <a href='https://github.com/mahkah/dc_stop_and_frisk/tree/master/transformed_data'>the underlying data</a>, or view <a href='https://github.com/mahkah/dc_stop_and_frisk/blob/master/index.html'>the source code</a>.</p>
+    <p>Curious what facts gave police gave police <a href='https://www.law.cornell.edu/wex/stop_and_frisk'>reasonable suspecion to make a stop</a>, or what stops esculated to frisks or arrests? Hold the MPD and Mayor Bowser accountable for <a href=''>failing to comply with data collection laws</a>.</p>
+    <p></p>
+    <h2>Filter the Data</h2>
     <!--Race/Ethn Filter-->
-    <div class='session' id='ethn_buttons'>
+    <div class='session' id='ethn-buttons'>
       <h3>Race/Ethnicity</h3>
       <div class='row' id='ethn-filters'>
-        <input id='all_race' type='radio' name='toggle_race' value='All' checked='checked'>
-        <label for='all_race'>All</label>
-        <input id='black' type='radio' name='toggle_race' value='Black'>
+        <input id='all-race' type='radio' name='toggle-race' value='All' checked='checked'>
+        <label for='all-race'>All</label>
+        <input id='black' type='radio' name='toggle-race' value='Black'>
         <label for='black'>Black</label>
-        <input id='white' type='radio' name='toggle_race' value='White'>
+        <input id='white' type='radio' name='toggle-race' value='White'>
         <label for='white'>White</label>
-        <input id='hisp' type='radio' name='toggle_race' value='Hispanic or Latino'>
+        <input id='hisp' type='radio' name='toggle-race' value='Hispanic or Latino'>
         <label for='hisp'>Hispanic or Latino</label>
-        <input id='azn' type='radio' name='toggle_race' value='Asian'>
+        <input id='azn' type='radio' name='toggle-race' value='Asian'>
         <label for='azn'>Asian</label>
-        <input id='other' type='radio' name='toggle_race' value='Other'>
+        <input id='other' type='radio' name='toggle-race' value='Other'>
         <label for='other'>Other</label>
       </div>
     </div>
     <!--Gender Filter-->
-    <div class='session' id='gender_buttons'>
+    <div class='session' id='gender-buttons'>
       <h3>Gender</h3>
       <div class='row' id='gender-filters'>
-        <input id='all_gender' type='radio' name='toggle_gender' value='All' checked='checked'>
-        <label for='all_gender'>All</label>
-        <input id='male' type='radio' name='toggle_gender' value='Male'>
+        <input id='all-gender' type='radio' name='toggle-gender' value='All' checked='checked'>
+        <label for='all-gender'>All</label>
+        <input id='male' type='radio' name='toggle-gender' value='Male'>
         <label for='male'>Men</label>
-        <input id='women' type='radio' name='toggle_gender' value='Female'>
+        <input id='women' type='radio' name='toggle-gender' value='Female'>
         <label for='women'>Women</label>
       </div>
     </div>
@@ -202,38 +203,27 @@
     <label for="juvenile-age">Juveniles</label>
     <div> <input type="checkbox" id="adult-age" name="adult-age" value="adult-age" checked>
     <label for="adult-age">Adults</label>
-    <div id="range-slider"></div></div>
+    <div id="age-slider"></div></div>
     <div></div>
-    <!--Year Filter
-    <div class='session' id='sliderbar'>
-      <h3>Year: <label id='active-year'>All Years</label></h3>
-      <button class='btn' id='all_years_btn'>All Years</button>
-      <input id='year_slider' class='row' type='range' min='2010' max='2016' step='1' value='2016'/>
-    </div>-->
     <!--Date Slider-->
     <h3>Date Range: <br>
     <label id ='event-start'>Friday, 1st January 2010</label> to <br><label id ='event-end'>Saturday, 31st December 2016</label></h3>
     <div id="date-slider"></div>
-    <button class='btn' id='all_dates_btn'>Entire Period</button>
-    <button class='btn' id='year_btn'>Year</button>
-    <button class='btn' id='month_btn'>Month</button>
-    <!--Hour Filter
-    <div class='session' id='sliderbar'>
-      <h3>Hour: <label id='active-hour'>All Times</label></h3>
-      <button class='btn' id='all_time_btn'>All Times</button>
-      <input id='time_slider' class='row' type='range' min='0' max='23' step='1' value='22'/>
-    </div>-->
+    <button class='btn' id='all-dates-btn'>Entire Period</button>
+    <button class='btn' id='year-btn'>Year</button>
+    <button class='btn' id='month-btn'>Month</button>
 
 
-    <div id='tooltip-heading'></div>
-    <div id='tooltip-info'></div>
 
 
   </div>
-  <div class='map-overlay' id='legend'></div>
+  <div class='map-overlay' id='legend'>
+    <div id='tooltip-heading'><h4>Region Information</h4></div>
+    <div id='tooltip-info'><p>Hover over a region for more information.</p></div>
+  </div>
   <script>
     // Build heading and color bar
-    var vridis256 = ['#440154', '#440255', '#440357', '#450558', '#45065A',
+    let vridis256 = ['#440154', '#440255', '#440357', '#450558', '#45065A',
       '#45085B', '#46095C', '#460B5E', '#460C5F', '#460E61', '#470F62', '#471163',
       '#471265', '#471466', '#471567', '#471669', '#47186A', '#48196B', '#481A6C',
       '#481C6E', '#481D6F', '#481E70', '#482071', '#482172', '#482273', '#482374',
@@ -271,26 +261,28 @@
       '#DFE318', '#E1E318', '#E4E318', '#E7E419', '#E9E419', '#ECE41A', '#EEE51B',
       '#F1E51C', '#F3E51E', '#F6E61F', '#F8E621', '#FAE622', '#FDE724'].reverse();
 
-    var viridisBar = '<span style="line-height: 0; display: inline-block; border: 1px solid black;">'
+    let viridisBar = '<span style="line-height: 0; display: inline-block; border: 1px solid black;">'
     vridis256.forEach(function(color) {
       viridisBar = viridisBar + '<span style="width: 1px; height: 20px; background-color: ' + color + '; display: inline-block;"></span>'
     });
     viridisBar = viridisBar + '</span>'
-    legend.innerHTML = '<h4>Incident Count</h4>' + viridisBar;
+    let colorBar = document.createElement('div');
+    colorBar.innerHTML = '<h4>Incident Count</h4>' + viridisBar;
+    legend.appendChild(colorBar);
     // Create Numeric Labels
-    var scale = document.createElement('div');
-    var valueMin = document.createElement('span');
+    let scale = document.createElement('div');
+    let valueMin = document.createElement('span');
     valueMin.innerHTML = 0;
     valueMin.className = 'legend-min';
     scale.appendChild(valueMin);
-    var valueMax = document.createElement('span');
+    let valueMax = document.createElement('span');
     valueMax.innerHTML = 0;
     valueMax.className = 'legend-max';
     valueMax.id = 'legend-max';
     scale.appendChild(valueMax);
     legend.appendChild(scale);
     // Create Color Rescale Checkbox
-    var scaleControl = document.createElement('div');
+    let scaleControl = document.createElement('div');
     scaleControl.innerHTML = '<br><input type="checkbox" id="filter-rescale" name="filter-rescale" value="filter-rescale" unchecked><label for="filter-rescale">Rescale color legend on filter change</label>'
     legend.appendChild(scaleControl);
   </script>
@@ -299,44 +291,7 @@
   <script>
   // Config
   mapboxgl.accessToken = 'pk.eyJ1IjoibWFoa2FoIiwiYSI6ImNqZW9zNHBvaTBhc2YzM2x0OWg3aXZ5dTAifQ.F1uwBes6jRJHdwqeSMiA-w';
-  var branch = 'master'
-
-  // Filters
-  /* Define attributes to collect from individual incidents for filtering
-  active: Whether a not a filter is being used
-  mapboxFilter: Name of mapbox filter using built-in expressions
-  clusterFilterFunction: Function used to filter the cluster layer
-  choroplethFilterFunction: Function used to filter the choropleth layer*/
-  var filterAttributes = {
-    'race': {
-      'active': false,
-      'mapboxFilter': ['!=', ['string', ['get', 'race']], 'placeholder']
-    },
-    'gen': {
-      'active': false,
-      'mapboxFilter': ['!=', ['string', ['get', 'gen']], 'placeholder']
-    },
-    'age': {
-      'active': false,
-      'mapboxFilter': ['!=', ['number', ['get', 'age']], -10]
-    },
-    'yr': {
-      'active': false,
-      'mapboxFilter': ['!=', ['number', ['get', 'yr']], 25]
-    },
-    'mon': {
-      'active': false,
-      'mapboxFilter': ''
-    },
-    'day': {
-      'active': false,
-      'mapboxFilter': ''
-    },
-    'hr': {
-      'active': false,
-      'mapboxFilter': ['!=', ['number', ['get', 'hr']], 25]
-    },
-  };
+  const branch = 'master'
 
   // Incident Data
   /*  Holds information about individual incidents and geographic features
@@ -348,16 +303,16 @@
   mapboxSourceName: Name of mapbox source
   geojson: Geojson file containing incident data
   indices: Mutable sets to keep track of individual filtered incidents
-  maxSFFC: Upper bound for choropleth color range
+  colorDefaultMax: Upper bound for choropleth color range
   */
-  var mapLayers = {
+  const mapLayers = {
     'indiv': {
       'layerNames': ['Individual Incidents', 'clusters', 'Individual Incidents Count'],
       'label': 'Individual Incidents',
       'polygon': false,
       'geojsonFilename': 'SF_Field_Contact_02202018_locations.geojson',
       'defaultLayer': true,
-      'mapboxSourceName': 'sffc_cluster'
+      'mapboxSourceName': 'sffcCluster'
     },
     'ward': {
       'layerNames': ['Wards'],
@@ -402,29 +357,62 @@
   };
   Object.keys(mapLayers).forEach(function(key) {
     if(mapLayers[key].polygon === true) {
-      mapLayers[key].maxSFFC = 0;
+      mapLayers[key].colorDefaultMax = 0;
       mapLayers[key].indices = {};
     }
   });
 
+  // Filters
+  /* Define attributes to collect from individual incidents for filtering
+  active: Whether a not a filter is being used
+  mapboxFilter: Name of mapbox filter using built-in expressions
+  clusterFilterFunction: Function used to filter the cluster layer
+  choroplethFilterFunction: Function used to filter the choropleth layer*/
+  const filterAttributes = {
+    'race': {
+      'active': false,
+      'mapboxFilter': ['!=', ['string', ['get', 'race']], 'placeholder']
+    },
+    'gen': {
+      'active': false,
+      'mapboxFilter': ['!=', ['string', ['get', 'gen']], 'placeholder']
+    },
+    'age': {
+      'active': false,
+      'mapboxFilter': ['!=', ['number', ['get', 'age']], -10]
+    },
+    'yr': {
+      'active': false,
+      'mapboxFilter': ['!=', ['number', ['get', 'yr']], 25]
+    },
+    'hr': {
+      'active': false,
+      'mapboxFilter': ['!=', ['number', ['get', 'hr']], 25]
+    },
+  };
+  const mapboxFilter = ['all']
+  Object.keys(filterAttributes).forEach( function(attribute, i) {
+    mapboxFilter.push(filterAttributes[attribute].mapboxFilter);
+  });
+
   // Color Palettes, generated using Bokeh
-  var viridis20 = ['#440154', '#471466', '#472575', '#453681', '#3F4587',
+  const viridis20 = ['#440154', '#471466', '#472575', '#453681', '#3F4587',
     '#39558B', '#32628D', '#2D6F8E', '#277C8E', '#23898D', '#1F968B',
     '#1FA286', '#29AF7F', '#3BBA75', '#53C567', '#72CF55', '#92D741',
     '#B7DD29', '#DAE218', '#FDE724'].reverse();
-  var inferno20 = ['#000003', '#040316', '#10092F', '#1F0C47', '#32095D',
+  const inferno20 = ['#000003', '#040316', '#10092F', '#1F0C47', '#32095D',
     '#450A69', '#550F6D', '#66156E', '#781C6D', '#88216A', '#992864',
     '#A92E5E', '#BA3655', '#C93F4A', '#D64A3F', '#E35832', '#ED6825',
     '#F37918', '#F98C09', '#FB9E07', '#FBB318', '#F8C931', '#F4DC4F',
     '#F1F079', '#FCFEA4'].reverse();
-  var cividis20 = ['#00204C', '#002963', '#00316F', '#1E3C6C', '#33456B',
+  const cividis20 = ['#00204C', '#002963', '#00316F', '#1E3C6C', '#33456B',
     '#444F6B', '#51586C', '#5E626E', '#6A6C71', '#757575', '#828078',
     '#8F8A78', '#9D9577', '#AAA074', '#B8AB70', '#C7B76A', '#D5C263',
     '#E5CF5A', '#F4DC4E', '#FFE945'].reverse();
 
   // Misc helper variables
-  var activePolygonLayer = ''; //contains mapLayer key for active choropleth layer
-  var filterRescale = false; //whether or not choropleth fill colors should rescale based on the filters
+  let activePolygonLayer = ''; //contains mapLayer key for active choropleth layer
+  let filterRescale = false; //whether or not choropleth fill colors should rescale based on the filters
 
 
 
@@ -486,7 +474,7 @@
 
 
   // Build HTML Elements
-  var ageSlider = document.getElementById('range-slider');
+  const ageSlider = document.getElementById('age-slider');
   noUiSlider.create(ageSlider, {
     range: {
       'min': 18,
@@ -501,12 +489,12 @@
     behaviour: 'tap-drag'
   });
 
-  var dateSlider = document.getElementById('date-slider');
+  const dateSlider = document.getElementById('date-slider');
   function timestamp(str){
     return new Date(str).getTime();
   }
-  var dateMin = timestamp('2010') + (5 * 60 * 60 * 1000); // 5 Hours is for EST?
-  var dateMax = timestamp('2017')
+  const dateMin = timestamp('2010') + (5 * 60 * 60 * 1000); // 5 Hours is for EST?
+  const dateMax = timestamp('2017')
   noUiSlider.create(dateSlider, {
     range: {
       'min': dateMin,
@@ -522,7 +510,7 @@
 
 
   // Load map
-  var map = new mapboxgl.Map({
+  const map = new mapboxgl.Map({
     container: 'map', // container element id
     style: 'mapbox://styles/mapbox/light-v9',
     center: [-77.030034, 38.901863], // initial map center in [lon, lat]
@@ -532,567 +520,566 @@
 
 
 
-// Data Layers
-map.on('load', async function() {
-  mapLayers.indiv.geojson = await loadData('indiv', branch);
-  console.log(mapLayers.indiv.geojsonFilename + " successfully loaded.");
+  // Data Layers
+  map.on('load', async function() {
+    mapLayers.indiv.geojson = await loadData('indiv', branch);
+    console.log(mapLayers.indiv.geojsonFilename + " successfully loaded.");
 
-  // Incident Cluster Layer
-  map.addSource(mapLayers.indiv.mapboxSourceName, {
-    type: 'geojson',
-    data: mapLayers.indiv.geojson,
-    cluster: true,
-    clusterMaxZoom: 29,
-    clusterRadius: 30
-  });
-  // Single Incidents
-  map.addLayer({
-    id: mapLayers.indiv.layerNames[0],
-    type: 'circle',
-    source: mapLayers.indiv.mapboxSourceName,
-    filter: ['all', filterAttributes.race.mapboxFilter, filterAttributes.gen.mapboxFilter, filterAttributes.age.mapboxFilter, filterAttributes.yr.mapboxFilter, filterAttributes.hr.mapboxFilter],
-    paint: {
-      "circle-color": inferno20[0],
-      "circle-radius": 4,
-      "circle-stroke-width": 1,
-      "circle-stroke-color": "#111",
-      "circle-opacity": 0.8
-    }
-  }, 'admin-2-boundaries-dispute');
-  // Clusters
-  map.addLayer({
-    id: mapLayers.indiv.layerNames[1],
-    type: "circle",
-    source: mapLayers.indiv.mapboxSourceName,
-    filter:  ['all', ["has", "point_count"]],
-    paint: {
-      "circle-color": [
-        "interpolate",
-        ["exponential", 2.5],
-        ["get", "point_count"],
-        1, inferno20[0],
-        6, inferno20[1],
-        16, inferno20[2],
-        32, inferno20[3],
-        56, inferno20[4],
-        88, inferno20[5],
-        130, inferno20[6],
-        181, inferno20[7],
-        243, inferno20[8],
-        316, inferno20[9],
-        401, inferno20[10],
-        499, inferno20[11],
-        609, inferno20[12],
-        733, inferno20[13],
-        871, inferno20[14],
-        1024, inferno20[15],
-        1192, inferno20[16],
-        1375, inferno20[17],
-        1574, inferno20[18],
-        1789, inferno20[19]
-      ],
-      "circle-radius": [
-        "interpolate",
-        ["exponential", 2.5],
-        ["get", "point_count"],
-        1, 5,
-        6, 6,
-        16, 7,
-        32, 8,
-        56, 9,
-        88, 10,
-        130, 11,
-        181, 12,
-        243, 13,
-        316, 14,
-        401, 15,
-        499, 16,
-        609, 17,
-        733, 18,
-        871, 19,
-        1024, 20,
-        1192, 21,
-        1375, 22,
-        1574, 23,
-        1789, 24
-      ],
-      'circle-opacity': 0.8
-    }
-  });
-  // Cluster Labels
-  map.addLayer({
-    id: mapLayers.indiv.layerNames[2],
-    type: "symbol",
-    source: mapLayers.indiv.mapboxSourceName,
-    filter:  ['all', ["has", "point_count"]],
-    layout: {
-      "text-field": "{point_count_abbreviated}",
-      "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
-      "text-size": 12
-    }
-  });
-
-  // Choropleth Maps
-  Object.keys(mapLayers).forEach(function(key) {
-    if(mapLayers[key].polygon) {
-      plotChoropleth(key, branch);
-    }
-  });
-
-  /** Loads and plots choropleth maps. */
-  async function plotChoropleth(key, branch) {
-    mapLayers[key].geojson = await loadData(key, branch);
-    console.log(mapLayers[key].geojsonFilename + " successfully loaded.");
-
-    for (var i = 0; i < mapLayers[key].geojson.features.length; i++) {
-      mapLayers[key].geojson.features[i].properties.sffcCount = mapLayers[key].geojson.features[i].properties.hr.length;
-      if (mapLayers[key].geojson.features[i].properties.sffcCount > mapLayers[key].maxSFFC) {
-        mapLayers[key].maxSFFC = mapLayers[key].geojson.features[i].properties.sffcCount;
-      }
-    }
-    mapLayers[key].maxSFFCUnfiltered = mapLayers[key].maxSFFC;
-    mapLayers[key].colorRange = [];
-    for (var i = 0; i < 20; i++) {
-      mapLayers[key].colorRange[i] = mapLayers[key].maxSFFC * (i / 19);
-    }
-    mapLayers[key].colorDefaultMax = mapLayers[key].colorRange[19]
-
-    map.addSource(mapLayers[key].mapboxSourceName, {
+    // Incident Cluster Layer
+    map.addSource(mapLayers.indiv.mapboxSourceName, {
       type: 'geojson',
-      data: mapLayers[key].geojson
+      data: mapLayers.indiv.geojson,
+      cluster: true,
+      clusterMaxZoom: 29,
+      clusterRadius: 30
     });
+    // Single Incidents
     map.addLayer({
-      'id': mapLayers[key].layerNames[0],
-      'type': 'fill',
-      'source': mapLayers[key].mapboxSourceName,
-      'paint': {
-        'fill-color': [
-          'interpolate',
-          ['linear'],
-          ['get', 'sffcCount'],
-          mapLayers[key].colorRange[0], viridis20[0],
-          mapLayers[key].colorRange[1], viridis20[1],
-          mapLayers[key].colorRange[2], viridis20[2],
-          mapLayers[key].colorRange[3], viridis20[3],
-          mapLayers[key].colorRange[4], viridis20[4],
-          mapLayers[key].colorRange[5], viridis20[5],
-          mapLayers[key].colorRange[6], viridis20[6],
-          mapLayers[key].colorRange[7], viridis20[7],
-          mapLayers[key].colorRange[8], viridis20[8],
-          mapLayers[key].colorRange[9], viridis20[9],
-          mapLayers[key].colorRange[10], viridis20[10],
-          mapLayers[key].colorRange[11], viridis20[11],
-          mapLayers[key].colorRange[12], viridis20[12],
-          mapLayers[key].colorRange[13], viridis20[13],
-          mapLayers[key].colorRange[14], viridis20[14],
-          mapLayers[key].colorRange[15], viridis20[15],
-          mapLayers[key].colorRange[16], viridis20[16],
-          mapLayers[key].colorRange[17], viridis20[17],
-          mapLayers[key].colorRange[18], viridis20[18],
-          mapLayers[key].colorRange[19], viridis20[19]
+      id: mapLayers.indiv.layerNames[0],
+      type: 'circle',
+      source: mapLayers.indiv.mapboxSourceName,
+      filter: mapboxFilter,
+      paint: {
+        "circle-color": inferno20[0],
+        "circle-radius": 4,
+        "circle-stroke-width": 1,
+        "circle-stroke-color": "#111",
+        "circle-opacity": 0.8
+      }
+    }, 'admin-2-boundaries-dispute');
+    // Clusters
+    map.addLayer({
+      id: mapLayers.indiv.layerNames[1],
+      type: "circle",
+      source: mapLayers.indiv.mapboxSourceName,
+      filter:  ['all', ["has", "point_count"]],
+      paint: {
+        "circle-color": [
+          "interpolate",
+          ["exponential", 2.5],
+          ["get", "point_count"],
+          1, inferno20[0],
+          6, inferno20[1],
+          16, inferno20[2],
+          32, inferno20[3],
+          56, inferno20[4],
+          88, inferno20[5],
+          130, inferno20[6],
+          181, inferno20[7],
+          243, inferno20[8],
+          316, inferno20[9],
+          401, inferno20[10],
+          499, inferno20[11],
+          609, inferno20[12],
+          733, inferno20[13],
+          871, inferno20[14],
+          1024, inferno20[15],
+          1192, inferno20[16],
+          1375, inferno20[17],
+          1574, inferno20[18],
+          1789, inferno20[19]
         ],
-        'fill-opacity': 0.7,
-        'fill-outline-color': 'white'
+        "circle-radius": [
+          "interpolate",
+          ["exponential", 2.5],
+          ["get", "point_count"],
+          1, 5,
+          6, 6,
+          16, 7,
+          32, 8,
+          56, 9,
+          88, 10,
+          130, 11,
+          181, 12,
+          243, 13,
+          316, 14,
+          401, 15,
+          499, 16,
+          609, 17,
+          733, 18,
+          871, 19,
+          1024, 20,
+          1192, 21,
+          1375, 22,
+          1574, 23,
+          1789, 24
+        ],
+        'circle-opacity': 0.8
       }
-    }, 'Individual Incidents')
-    map.setLayoutProperty(mapLayers[key].layerNames[0], 'visibility', 'none');
-  }
+    });
+    // Cluster Labels
+    map.addLayer({
+      id: mapLayers.indiv.layerNames[2],
+      type: "symbol",
+      source: mapLayers.indiv.mapboxSourceName,
+      filter:  ['all', ["has", "point_count"]],
+      layout: {
+        "text-field": "{point_count_abbreviated}",
+        "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+        "text-size": 12
+      }
+    });
 
-  // Filters
-  // Stop Type Filter
-  // document.getElementById('stop_filters').addEventListener('change', function(e) {
-  //   singleValueFilter('stop', e.target.value);
-  // });
-  // Ethnicity Filter
-  document.getElementById('ethn-filters').addEventListener('change', function(e) {
-    singleValueFilter('race', e.target.value);
-  });
-  // Gender Filter
-  document.getElementById('gender-filters').addEventListener('change', function(e) {
-    singleValueFilter('gen', e.target.value);
-  });
-  // Age Fliter
-  document.getElementById('juvenile-age').addEventListener('change', ageFilter);
-  document.getElementById('adult-age').addEventListener('change', ageFilter);
-  ageSlider.noUiSlider.on('update', ageFilterText);
-  ageSlider.noUiSlider.on('change', function() {
-    document.getElementById("adult-age").checked = true;
-    ageFilter();
-  });
-  // Date Filter
 
-  /** Applies filters that call for a datafield to match a specific value*/
-  function singleValueFilter(attribute, value) {
-    filterAttributes[attribute].active = (value != 'All');
-    if (value === 'All') {
-      // Single Incidents
-      filterAttributes[attribute].mapboxFilter = ['!=', ['string', ['get', attribute]], 'placeholder'];
-    } else {
-      // Single Incidents
-      filterAttributes[attribute].mapboxFilter = ['match', ['get', attribute], value, true, false];
-      filterAttributes[attribute].clusterFilterFunction = function(i) {return i.properties[attribute] === value;}
-      // Choropleth layers
-      Object.keys(mapLayers).forEach(function(key) {
-        if(mapLayers[key].polygon) {singleValueIndices(key, attribute, value);}
-      });
-    }
-    filterUpdate();
-  }
 
-  /** Updates the age label filter displayed in HTML*/
-  function ageFilterText() {
-    if(document.getElementById('adult-age').checked) {
-      var ageLowerBound = parseInt(ageSlider.noUiSlider.get()[0]);
-      var ageUpperBound = parseInt(ageSlider.noUiSlider.get()[1]);
-      if(document.getElementById('juvenile-age').checked) {document.getElementById('active-age').innerText = 'Juveniles and Adults ' + ageLowerBound + '-' + ageUpperBound;}
-      else {document.getElementById('active-age').innerText = 'Adults ' + ageLowerBound + '-' + ageUpperBound;}
-    }
-    else {
-      if(document.getElementById('juvenile-age').checked) {document.getElementById('active-age').innerText = 'Juveniles';}
-      else {document.getElementById('active-age').innerText = 'Select Juveniles and/or Adults';}
-    }
-  }
+    // Filters
+    // Stop Type Filter
+    // document.getElementById('stop_filters').addEventListener('change', function(e) {
+    //   singleValueFilter('stop', e.target.value);
+    // });
+    // Ethnicity Filter
+    document.getElementById('ethn-filters').addEventListener('change', function(e) {
+      singleValueFilter('race', e.target.value);
+    });
+    // Gender Filter
+    document.getElementById('gender-filters').addEventListener('change', function(e) {
+      singleValueFilter('gen', e.target.value);
+    });
+    // Age Fliter
+    document.getElementById('juvenile-age').addEventListener('change', ageFilter);
+    document.getElementById('adult-age').addEventListener('change', ageFilter);
+    ageSlider.noUiSlider.on('update', ageFilterText);
+    ageSlider.noUiSlider.on('change', function() {
+      document.getElementById("adult-age").checked = true;
+      ageFilter();
+    });
+    // Date Filter
 
-  /** Applies the age filter*/
-  function ageFilter() {
-    ageFilterText()
-    var ageLowerBound = parseInt(ageSlider.noUiSlider.get()[0]);
-    var ageUpperBound = parseInt(ageSlider.noUiSlider.get()[1]);
-    filterAttributes.age.active = !(ageLowerBound === 18 && ageUpperBound === 75 && document.getElementById('adult-age').checked && document.getElementById('juvenile-age').checked);
-    if(document.getElementById('adult-age').checked) {
-      if(document.getElementById('juvenile-age').checked) {
+    /** Applies filters that call for a datafield to match a specific value*/
+    function singleValueFilter(attribute, value) {
+      filterAttributes[attribute].active = (value != 'All');
+      if (value === 'All') {
         // Single Incidents
-        filterAttributes.age.mapboxFilter = ['any', ['==', ['number', ['get', 'age']], 0], ['all', ['>=', ['number', ['get', 'age']], ageLowerBound], ['<=', ['number', ['get', 'age']], ageUpperBound]]];
-        filterAttributes.age.clusterFilterFunction = function(i) { return i.properties.age === 0 || (i.properties.age >= ageLowerBound && i.properties.age <= ageUpperBound);}
-        // Choropleth layers
-        filterAttributes.age.choroplethFilterFunction = function(i) {return i === 0 || (i >= ageLowerBound && i <= ageUpperBound);}
+        filterAttributes[attribute].mapboxFilter = ['!=', ['string', ['get', attribute]], 'placeholder'];
       } else {
         // Single Incidents
-        filterAttributes.age.mapboxFilter = ['all', ['>=', ['number', ['get', 'age']], ageLowerBound], ['<=', ['number', ['get', 'age']], ageUpperBound]];
-        filterAttributes.age.clusterFilterFunction = function(i) { return i.properties.age >= ageLowerBound && i.properties.age <= ageUpperBound;}
+        filterAttributes[attribute].mapboxFilter = ['match', ['get', attribute], value, true, false];
+        filterAttributes[attribute].clusterFilterFunction = function(i) {return i.properties[attribute] === value;}
         // Choropleth layers
-        filterAttributes.age.choroplethFilterFunction = function(i) { return i >= ageLowerBound && i <= ageUpperBound;}
+        Object.keys(mapLayers).forEach(function(key) {
+          if(mapLayers[key].polygon) {singleValueIndices(key, attribute, value);}
+        });
       }
-      Object.keys(mapLayers).forEach(function(key) {
-        if(mapLayers[key].polygon === true) {functionValueIndices(key, 'age');}
-      });
-      // Refresh Filters
       filterUpdate();
-    } else {
-      var age = document.getElementById('juvenile-age').checked ? 0 : -10
-      singleValueFilter('age', age)
-    }
-  };
-
-  // Date Slider
-  var dateValues = [
-  	document.getElementById('event-start'),
-  	document.getElementById('event-end')
-  ];
-
-  dateSlider.noUiSlider.on('update', function(values, handle) {
-  	dateFilterText(values, handle);
-  });
-
-  document.getElementById('all_dates_btn').addEventListener('click', function(e) {
-    dateFilterText([dateMin, dateMax], 0);
-    dateFilterText([dateMin, dateMax], 1);
-    dateSlider.noUiSlider.set([dateMin, dateMax]);
-  });
-
-  document.getElementById('year_btn').addEventListener('click', function(e) {
-    var currentMin = dateSlider.noUiSlider.get()[0];
-    var newMin = Number(currentMin);
-    var newMax = newMin + (365 * 24 * 60 * 60 * 1000);
-    if(newMax > dateMax) {
-      newMax = dateMax;
-      newMin = newMax - (365 * 24 * 60 * 60 * 1000);
     }
 
-    dateFilterText([newMin, newMax], 0);
-    dateFilterText([newMin, newMax], 1);
-    dateSlider.noUiSlider.set([newMin, newMax]);
-  });
-
-  document.getElementById('month_btn').addEventListener('click', function(e) {
-    var currentMin = dateSlider.noUiSlider.get()[0];
-    var newMin = Number(currentMin);
-    var newMax = newMin + (30 * 24 * 60 * 60 * 1000);
-    if(newMax > dateMax) {
-      newMax = dateMax;
-      newMin = newMax - (30 * 24 * 60 * 60 * 1000);
-    }
-
-    dateFilterText([newMin, newMax], 0);
-    dateFilterText([newMin, newMax], 1);
-    dateSlider.noUiSlider.set([newMin, newMax]);
-  });
-
-  function dateFilterText(values, handle) {
-    dateValues[handle].innerHTML = formatDate(new Date(+values[handle]));
-  }
-
-  // Append a suffix to dates.
-  // Example: 23 => 23rd, 1 => 1st.
-  function nth (d) {
-    if(d>3 && d<21) return 'th';
-    switch (d % 10) {
-      case 1:  return "st";
-      case 2:  return "nd";
-      case 3:  return "rd";
-      default: return "th";
-    }
-  }
-
-  // Create a string representation of the date.
-  function formatDate (date) {
-    var weekdays = [
-    		"Sunday", "Monday", "Tuesday",
-    		"Wednesday", "Thursday", "Friday",
-    		"Saturday"
-    	];
-    var	months = [
-    		"January", "February", "March",
-    		"April", "May", "June", "July",
-    		"August", "September", "October",
-    		"November", "December"
-    	];
-    return weekdays[date.getDay()] + ", " +
-      date.getDate() + nth(date.getDate()) + " " +
-      months[date.getMonth()] + " " +
-      date.getFullYear();
-  }
-
-  // Turn on filter control
-  filterConsole.style.visibility = 'visible'
-
-  // Layer Selection
-  Object.keys(mapLayers).forEach(function(key) {
-    // Build buttons for each layer
-    var link = document.createElement('a');
-    link.href = '#';
-    if (mapLayers[key].defaultLayer === true) {
-      link.className = 'active';
-    } else {
-      link.className = '';
-    }
-    link.textContent = mapLayers[key].label;
-    link.id = key
-    // Add interactivity
-    link.onclick = function(e) {
-      var clickedLayer = this.id;
-      e.preventDefault();
-      e.stopPropagation();
-      var visibility = map.getLayoutProperty(mapLayers[clickedLayer].layerNames[0], 'visibility');
-      if (visibility === 'visible') {
-        this.className = '';
-        for (var i = 0; i < mapLayers[clickedLayer].layerNames.length; i++) {
-          map.setLayoutProperty(mapLayers[clickedLayer].layerNames[i], 'visibility', 'none');
-        }
-        if(mapLayers[clickedLayer].polygon) {activePolygonLayer = '';}
-      } else {
-        this.className = 'active';
-        if(mapLayers[clickedLayer].polygon) {refreshChoropleth(clickedLayer);}
-        for (var i = 0; i < mapLayers[clickedLayer].layerNames.length; i++) {
-          map.setLayoutProperty(mapLayers[clickedLayer].layerNames[i], 'visibility', 'visible');
-        }
-        //Turn off the current polygon layer, if applicable
-        if(mapLayers[clickedLayer].polygon) {
-          if(activePolygonLayer) {
-            document.getElementById(activePolygonLayer).className = '';
-            map.setLayoutProperty(mapLayers[activePolygonLayer].layerNames[0], 'visibility', 'none');
-          }
-          activePolygonLayer = clickedLayer;
-        }
-      }
-      // Toggle Legend and Tooltip
-      if(activePolygonLayer) {
-        document.getElementById('tooltip-heading').innerHTML = '<h2>Info</h2>';
-        document.getElementById('tooltip-info').innerHTML = '<p>Hover over a region for more information.</p>';
-
-        legend.style.visibility = 'visible'
+    /** Updates the age label filter displayed in HTML*/
+    function ageFilterText() {
+      if(document.getElementById('adult-age').checked) {
+        const ageLowerBound = parseInt(ageSlider.noUiSlider.get()[0]);
+        const ageUpperBound = parseInt(ageSlider.noUiSlider.get()[1]);
+        if(document.getElementById('juvenile-age').checked) {document.getElementById('active-age').innerText = 'Juveniles and Adults ' + ageLowerBound + '-' + ageUpperBound;}
+        else {document.getElementById('active-age').innerText = 'Adults ' + ageLowerBound + '-' + ageUpperBound;}
       }
       else {
-        document.getElementById('tooltip-heading').innerHTML = '';
-        document.getElementById('tooltip-info').innerHTML = '';
+        if(document.getElementById('juvenile-age').checked) {document.getElementById('active-age').innerText = 'Juveniles';}
+        else {document.getElementById('active-age').innerText = 'Select Juveniles and/or Adults';}
+      }
+    }
 
-        legend.style.visibility = 'hidden'
+    /** Applies the age filter*/
+    function ageFilter() {
+      ageFilterText()
+      const ageLowerBound = parseInt(ageSlider.noUiSlider.get()[0]);
+      const ageUpperBound = parseInt(ageSlider.noUiSlider.get()[1]);
+      filterAttributes.age.active = !(ageLowerBound === 18 && ageUpperBound === 75 && document.getElementById('adult-age').checked && document.getElementById('juvenile-age').checked);
+      if(document.getElementById('adult-age').checked) {
+        if(document.getElementById('juvenile-age').checked) {
+          // Single Incidents
+          filterAttributes.age.mapboxFilter = ['any',
+            ['==', ['number', ['get', 'age']], 0],
+            ['all',
+              ['>=', ['number', ['get', 'age']], ageLowerBound],
+              ['<=', ['number', ['get', 'age']], ageUpperBound]
+            ]
+          ];
+          filterAttributes.age.clusterFilterFunction = function(i) { return i.properties.age === 0 || (i.properties.age >= ageLowerBound && i.properties.age <= ageUpperBound);}
+          // Choropleth layers
+          filterAttributes.age.choroplethFilterFunction = function(i) {return i === 0 || (i >= ageLowerBound && i <= ageUpperBound);}
+        } else {
+          // Single Incidents
+          filterAttributes.age.mapboxFilter = ['all',
+            ['>=', ['number', ['get', 'age']], ageLowerBound],
+            ['<=', ['number', ['get', 'age']], ageUpperBound]
+          ];
+          filterAttributes.age.clusterFilterFunction = function(i) { return i.properties.age >= ageLowerBound && i.properties.age <= ageUpperBound;}
+          // Choropleth layers
+          filterAttributes.age.choroplethFilterFunction = function(i) { return i >= ageLowerBound && i <= ageUpperBound;}
+        }
+        Object.keys(mapLayers).forEach(function(key) {
+          if(mapLayers[key].polygon === true) {functionValueIndices(key, 'age');}
+        });
+        // Refresh Filters
+        filterUpdate();
+      } else {
+        const age = document.getElementById('juvenile-age').checked ? 0 : -10
+        singleValueFilter('age', age)
       }
     };
-    var layers = document.getElementById('menu');
-    layers.appendChild(link);
-  });
-}); // End of on map load actions
 
+    // Date Slider
+    let dateValues = [
+    	document.getElementById('event-start'),
+    	document.getElementById('event-end')
+    ];
 
-
-
-// Tooltip
-map.on('mousemove', function(e) {
-  var incident
-  if(activePolygonLayer) {
-    var incident = map.queryRenderedFeatures(e.point, {
-      layers: mapLayers[activePolygonLayer].layerNames
+    dateSlider.noUiSlider.on('update', function(values, handle) {
+    	dateFilterText(values, handle);
     });
-    if (incident.length > 0) {
-      document.getElementById('tooltip-info').innerHTML = '<h3><strong>' + incident[0].properties.sffcCount + ' police stops</strong></h3>';
-    } else {
-      document.getElementById('tooltip-info').innerHTML = '<p>Hover over a region for more information.</p>';
-    }
-  }
-});
 
-// Legend Checkbox
-//if(filterRescale) {document.getElementById('filter-rescale').checked = true;}
-document.getElementById('filter-rescale').addEventListener('change', function() {
-    filterRescale = document.getElementById('filter-rescale').checked
-    colorRescale(activePolygonLayer);
-    document.getElementById('legend-max').innerHTML = Math.floor(mapLayers[activePolygonLayer].colorRange[19]);
-});
-
-
-// Helper Functions
-/** Takes the intersection of two or more sets. */
-function intersect(sets) {
-  var minSize = sets[0].size;
-  var shortSetIndex = 0;
-  for (var i = 1; i < sets.length; i++) {
-    if (sets[i].size < minSize) {
-      minSize = sets[i].size;
-      shortSetIndex = i;
-    }
-  }
-  // var shortSetIndex = sets.reduce(function(minI,el,i,arr) {return el.size<arr[minI].size ? i : minI;}, 0);
-  var shortSet = sets.splice(shortSetIndex, 1);
-  var count = sets.length;
-  var result = new Set(shortSet[0]);
-  shortSet[0].forEach(item => {
-    var i = count;
-    var allHave = true;
-    while (i--){
-      allHave = sets[i].has(item)
-      if (!allHave) { break }
-    }
-    if (!allHave) {
-      result.delete(item);
-    }
-  })
-  return result;
-}
-
-/** Updates the specified choropleth layer according to the new map layers. */
-function refreshChoropleth(key) {
-  // Compute values for each region
-  for (var i = 0; i < mapLayers[key].geojson.features.length; i++) {
-    var indicesSets = [];
-    Object.keys(filterAttributes).forEach( function(attribute) {
-      if (filterAttributes[attribute].active) {indicesSets.push(mapLayers[key].indices[attribute][i]);}
+    document.getElementById('all-dates-btn').addEventListener('click', function(e) {
+      dateFilterText([dateMin, dateMax], 0);
+      dateFilterText([dateMin, dateMax], 1);
+      dateSlider.noUiSlider.set([dateMin, dateMax]);
     });
-    if (indicesSets.length === 0) {
-      var intersection_indices = new Set(Array.apply(null, {length: mapLayers[key].geojson.features[i].properties.race.length}).map(Number.call, Number));
-    } else if (indicesSets.length === 1) {
-      var intersection_indices = indicesSets[0];
-    } else {
-      var intersection_indices = intersect(indicesSets);
-    }
-    mapLayers[key].geojson.features[i].properties.sffcCount = intersection_indices.size;
-  }
-  // Send values to map
-  map.getSource(mapLayers[key].mapboxSourceName).setData(mapLayers[key].geojson);
-  // Rescale colors as needed
-  if(filterRescale || mapLayers[key].colorDefaultMax != mapLayers[key].colorRange[19]) {
-    colorRescale(key);
-  }
-  // Set legend
-  document.getElementById('legend-max').innerHTML = Math.floor(mapLayers[key].colorRange[19]);
-}
 
-/** Rescales choropleth fill colors based on the filtered dataset */
-function colorRescale(key) {
-  if(filterRescale) {
-    var maxSFFC = 0;
-    for (var i = 0; i < mapLayers[key].geojson.features.length; i++) {
-      if (mapLayers[key].geojson.features[i].properties.sffcCount > maxSFFC) {
-        maxSFFC = mapLayers[key].geojson.features[i].properties.sffcCount;
+    document.getElementById('year-btn').addEventListener('click', function(e) {
+      let currentMin = dateSlider.noUiSlider.get()[0];
+      let newMin = Number(currentMin);
+      let newMax = newMin + (365 * 24 * 60 * 60 * 1000);
+      if(newMax > dateMax) {
+        newMax = dateMax;
+        newMin = newMax - (365 * 24 * 60 * 60 * 1000);
+      }
+
+      dateFilterText([newMin, newMax], 0);
+      dateFilterText([newMin, newMax], 1);
+      dateSlider.noUiSlider.set([newMin, newMax]);
+    });
+
+    document.getElementById('month-btn').addEventListener('click', function(e) {
+      let currentMin = dateSlider.noUiSlider.get()[0];
+      let newMin = Number(currentMin);
+      let newMax = newMin + (30 * 24 * 60 * 60 * 1000);
+      if(newMax > dateMax) {
+        newMax = dateMax;
+        newMin = newMax - (30 * 24 * 60 * 60 * 1000);
+      }
+
+      dateFilterText([newMin, newMax], 0);
+      dateFilterText([newMin, newMax], 1);
+      dateSlider.noUiSlider.set([newMin, newMax]);
+    });
+
+    function dateFilterText(values, handle) {
+      dateValues[handle].innerHTML = formatDate(new Date(+values[handle]));
+    }
+
+    // Append a suffix to dates.
+    // Example: 23 => 23rd, 1 => 1st.
+    function nth (d) {
+      if(d>3 && d<21) return 'th';
+      switch (d % 10) {
+        case 1:  return "st";
+        case 2:  return "nd";
+        case 3:  return "rd";
+        default: return "th";
       }
     }
-  } else {
-    var maxSFFC = mapLayers[key].colorDefaultMax;
-  }
-  if(maxSFFC < 19) {maxSFFC = 19;}
-  mapLayers[key].colorRange = [];
-  for (var i = 0; i < 20; i++) {
-    mapLayers[key].colorRange[i] = maxSFFC * (i / 19);
-  }
-  map.setPaintProperty(mapLayers[key].layerNames[0], 'fill-color', [
-    'interpolate',
-    ['linear'],
-    ['get', 'sffcCount'],
-    mapLayers[key].colorRange[0], viridis20[0],
-    mapLayers[key].colorRange[1], viridis20[1],
-    mapLayers[key].colorRange[2], viridis20[2],
-    mapLayers[key].colorRange[3], viridis20[3],
-    mapLayers[key].colorRange[4], viridis20[4],
-    mapLayers[key].colorRange[5], viridis20[5],
-    mapLayers[key].colorRange[6], viridis20[6],
-    mapLayers[key].colorRange[7], viridis20[7],
-    mapLayers[key].colorRange[8], viridis20[8],
-    mapLayers[key].colorRange[9], viridis20[9],
-    mapLayers[key].colorRange[10], viridis20[10],
-    mapLayers[key].colorRange[11], viridis20[11],
-    mapLayers[key].colorRange[12], viridis20[12],
-    mapLayers[key].colorRange[13], viridis20[13],
-    mapLayers[key].colorRange[14], viridis20[14],
-    mapLayers[key].colorRange[15], viridis20[15],
-    mapLayers[key].colorRange[16], viridis20[16],
-    mapLayers[key].colorRange[17], viridis20[17],
-    mapLayers[key].colorRange[18], viridis20[18],
-    mapLayers[key].colorRange[19], viridis20[19]
-  ]);
-}
 
-/** Updates the individual layers according to the new map layers. */
-function filterUpdate() {
-  // Single incidents
-  map.setFilter('Individual Incidents', ['all', filterAttributes.race.mapboxFilter, filterAttributes.gen.mapboxFilter, filterAttributes.age.mapboxFilter, filterAttributes.yr.mapboxFilter, filterAttributes.hr.mapboxFilter]);
-  // Cluster Layer
-  var clusterData = mapLayers.indiv.geojson.features;
-  Object.keys(filterAttributes).forEach( function(attribute) {
-    if(filterAttributes[attribute].active) {clusterData = clusterData.filter(filterAttributes[attribute].clusterFilterFunction);}
+    // Create a string representation of the date.
+    function formatDate (date) {
+      const weekdays = [
+      		"Sunday", "Monday", "Tuesday",
+      		"Wednesday", "Thursday", "Friday",
+      		"Saturday"
+      	];
+      const	months = [
+      		"January", "February", "March",
+      		"April", "May", "June", "July",
+      		"August", "September", "October",
+      		"November", "December"
+      	];
+      return weekdays[date.getDay()] + ", " +
+        date.getDate() + nth(date.getDate()) + " " +
+        months[date.getMonth()] + " " +
+        date.getFullYear();
+    }
+
+    // Turn on filter control
+    filterConsole.style.visibility = 'visible'
+
+    // Choropleth Maps
+    polygonLayers(branch);
+
+    /** Loads polygon datasets, plots them, and builds menu for toggling them */
+    async function polygonLayers(branch) {
+      let polygonGeojsons = [];
+      Object.keys(mapLayers).forEach(function(key) {
+        if(mapLayers[key].polygon) {polygonGeojsons.push(plotChoropleth(key, branch));}
+      });
+      await Promise.all(polygonGeojsons);
+
+      // Build layer selection menu and associated elements
+      Object.keys(mapLayers).forEach(function(key) {
+        // Build buttons for each layer
+        const link = document.createElement('a');
+        link.href = '#';
+        if (mapLayers[key].defaultLayer === true) {
+          link.className = 'active';
+        } else {
+          link.className = '';
+        }
+        link.textContent = mapLayers[key].label;
+        link.id = key
+        // Add interactivity
+        link.onclick = function(e) {
+          const clickedLayer = this.id;
+          e.preventDefault();
+          e.stopPropagation();
+          const visibility = map.getLayoutProperty(mapLayers[clickedLayer].layerNames[0], 'visibility');
+          if (visibility === 'visible') {
+            this.className = '';
+            for (let i = 0; i < mapLayers[clickedLayer].layerNames.length; i++) {
+              map.setLayoutProperty(mapLayers[clickedLayer].layerNames[i], 'visibility', 'none');
+            }
+            if(mapLayers[clickedLayer].polygon) {activePolygonLayer = '';}
+          } else {
+            this.className = 'active';
+            if(mapLayers[clickedLayer].polygon) {refreshChoropleth(clickedLayer);}
+            for (let i = 0; i < mapLayers[clickedLayer].layerNames.length; i++) {
+              map.setLayoutProperty(mapLayers[clickedLayer].layerNames[i], 'visibility', 'visible');
+            }
+            //Turn off the current polygon layer, if applicable
+            if(mapLayers[clickedLayer].polygon) {
+              if(activePolygonLayer) {
+                document.getElementById(activePolygonLayer).className = '';
+                map.setLayoutProperty(mapLayers[activePolygonLayer].layerNames[0], 'visibility', 'none');
+              }
+              activePolygonLayer = clickedLayer;
+            }
+          }
+          // Toggle Legend
+          legend.style.visibility = (activePolygonLayer) ? 'visible' : 'hidden';
+        };
+        document.getElementById('menu').appendChild(link)
+      });
+    }
+
+    /** Loads and plots choropleth maps. */
+    async function plotChoropleth(key, branch) {
+      mapLayers[key].geojson = await loadData(key, branch);
+      console.log(mapLayers[key].geojsonFilename + " successfully loaded.");
+
+      let maxSFFC = 0
+      for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
+        mapLayers[key].geojson.features[i].properties.sffcCount = mapLayers[key].geojson.features[i].properties.hr.length;
+        if (mapLayers[key].geojson.features[i].properties.sffcCount > maxSFFC) {
+          maxSFFC = mapLayers[key].geojson.features[i].properties.sffcCount;
+        }
+      }
+      mapLayers[key].colorDefaultMax = maxSFFC;
+      mapLayers[key].colorRange = [];
+      for (let i = 0; i < 20; i++) {
+        mapLayers[key].colorRange[i] = maxSFFC * (i / 19);
+      }
+
+      map.addSource(mapLayers[key].mapboxSourceName, {
+        type: 'geojson',
+        data: mapLayers[key].geojson
+      });
+      map.addLayer({
+        'id': mapLayers[key].layerNames[0],
+        'type': 'fill',
+        'source': mapLayers[key].mapboxSourceName,
+        'paint': {
+          'fill-color': [
+            'interpolate',
+            ['linear'],
+            ['get', 'sffcCount'],
+            mapLayers[key].colorRange[0], viridis20[0],
+            mapLayers[key].colorRange[1], viridis20[1],
+            mapLayers[key].colorRange[2], viridis20[2],
+            mapLayers[key].colorRange[3], viridis20[3],
+            mapLayers[key].colorRange[4], viridis20[4],
+            mapLayers[key].colorRange[5], viridis20[5],
+            mapLayers[key].colorRange[6], viridis20[6],
+            mapLayers[key].colorRange[7], viridis20[7],
+            mapLayers[key].colorRange[8], viridis20[8],
+            mapLayers[key].colorRange[9], viridis20[9],
+            mapLayers[key].colorRange[10], viridis20[10],
+            mapLayers[key].colorRange[11], viridis20[11],
+            mapLayers[key].colorRange[12], viridis20[12],
+            mapLayers[key].colorRange[13], viridis20[13],
+            mapLayers[key].colorRange[14], viridis20[14],
+            mapLayers[key].colorRange[15], viridis20[15],
+            mapLayers[key].colorRange[16], viridis20[16],
+            mapLayers[key].colorRange[17], viridis20[17],
+            mapLayers[key].colorRange[18], viridis20[18],
+            mapLayers[key].colorRange[19], viridis20[19]
+          ],
+          'fill-opacity': 0.7,
+          'fill-outline-color': 'white'
+        }
+      }, 'Individual Incidents')
+      map.setLayoutProperty(mapLayers[key].layerNames[0], 'visibility', 'none');
+    }
+  }); // End of on map load actions
+
+  // Tooltip
+  map.on('mousemove', function(e) {
+    if(activePolygonLayer) {
+      let incident = map.queryRenderedFeatures(e.point, {
+        layers: mapLayers[activePolygonLayer].layerNames
+      });
+      if (incident.length > 0) {
+        document.getElementById('tooltip-info').innerHTML = '<p>' + incident[0].properties.sffcCount + ' police stops<p>';
+      } else {
+        document.getElementById('tooltip-info').innerHTML = '<p>Hover over a region for more information.</p>';
+      }
+    }
   });
-  var clusterData = turf.featureCollection(clusterData);
-  map.getSource('sffc_cluster').setData(clusterData);
-  // Choropleth layers
-  if(activePolygonLayer) {refreshChoropleth(activePolygonLayer);}
-}
 
-//** Modifies the sets of indices to match a particular variable */
-function singleValueIndices(key, attribute, value) {
-  mapLayers[key].indices[attribute] = [];
-  for (var i = 0; i < mapLayers[key].geojson.features.length; i++) {
-    mapLayers[key].indices[attribute][i] = new Set();
-    var j = mapLayers[key].geojson.features[i].properties[attribute].indexOf(value);
-    while (j != -1) {
-      mapLayers[key].indices[attribute][i].add(j);
-      j = mapLayers[key].geojson.features[i].properties[attribute].indexOf(value, j + 1);
+  // Legend Checkbox
+  //if(filterRescale) {document.getElementById('filter-rescale').checked = true;}
+  document.getElementById('filter-rescale').addEventListener('change', function() {
+      filterRescale = document.getElementById('filter-rescale').checked
+      colorRescale(activePolygonLayer);
+      document.getElementById('legend-max').innerHTML = Math.floor(mapLayers[activePolygonLayer].colorRange[19]);
+  });
+
+
+  // Helper Functions
+  /** Takes the intersection of two or more sets. */
+  function intersect(sets) {
+    let minSize = sets[0].size;
+    let shortSetIndex = 0;
+    for (let i = 1; i < sets.length; i++) {
+      if (sets[i].size < minSize) {
+        minSize = sets[i].size;
+        shortSetIndex = i;
+      }
+    }
+    // let shortSetIndex = sets.reduce(function(minI,el,i,arr) {return el.size<arr[minI].size ? i : minI;}, 0);
+    let shortSet = sets.splice(shortSetIndex, 1);
+    let count = sets.length;
+    let result = new Set(shortSet[0]);
+    shortSet[0].forEach(item => {
+      let i = count;
+      let allHave = true;
+      while (i--){
+        allHave = sets[i].has(item)
+        if (!allHave) { break }
+      }
+      if (!allHave) {
+        result.delete(item);
+      }
+    })
+    return result;
+  }
+
+  /** Updates the specified choropleth layer according to the new map layers. */
+  function refreshChoropleth(key) {
+    // Compute values for each region
+    for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
+      let indicesSets = [];
+      Object.keys(filterAttributes).forEach( function(attribute) {
+        if (filterAttributes[attribute].active) {indicesSets.push(mapLayers[key].indices[attribute][i]);}
+      });
+      if (indicesSets.length === 0) {
+        var intersectionIndices = new Set(Array.apply(null, {length: mapLayers[key].geojson.features[i].properties.race.length}).map(Number.call, Number));
+      } else if (indicesSets.length === 1) {
+        var intersectionIndices = indicesSets[0];
+      } else {
+        var intersectionIndices = intersect(indicesSets);
+      }
+      mapLayers[key].geojson.features[i].properties.sffcCount = intersectionIndices.size;
+    }
+    // Send values to map
+    map.getSource(mapLayers[key].mapboxSourceName).setData(mapLayers[key].geojson);
+    // Rescale colors as needed
+    if(filterRescale || mapLayers[key].colorDefaultMax != mapLayers[key].colorRange[19]) {
+      colorRescale(key);
+    }
+    // Set legend
+    document.getElementById('legend-max').innerHTML = Math.floor(mapLayers[key].colorRange[19]);
+  }
+
+  /** Rescales choropleth fill colors based on the filtered dataset */
+  function colorRescale(key) {
+    if(filterRescale) {
+      var maxSFFC = 0;
+      for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
+        if (mapLayers[key].geojson.features[i].properties.sffcCount > maxSFFC) {
+          maxSFFC = mapLayers[key].geojson.features[i].properties.sffcCount;
+        }
+      }
+    } else {
+      var maxSFFC = mapLayers[key].colorDefaultMax;
+    }
+    if(maxSFFC < 19) {maxSFFC = 19;}
+    mapLayers[key].colorRange = [];
+    for (let i = 0; i < 20; i++) {
+      mapLayers[key].colorRange[i] = maxSFFC * (i / 19);
+    }
+    map.setPaintProperty(mapLayers[key].layerNames[0], 'fill-color', [
+      'interpolate',
+      ['linear'],
+      ['get', 'sffcCount'],
+      mapLayers[key].colorRange[0], viridis20[0],
+      mapLayers[key].colorRange[1], viridis20[1],
+      mapLayers[key].colorRange[2], viridis20[2],
+      mapLayers[key].colorRange[3], viridis20[3],
+      mapLayers[key].colorRange[4], viridis20[4],
+      mapLayers[key].colorRange[5], viridis20[5],
+      mapLayers[key].colorRange[6], viridis20[6],
+      mapLayers[key].colorRange[7], viridis20[7],
+      mapLayers[key].colorRange[8], viridis20[8],
+      mapLayers[key].colorRange[9], viridis20[9],
+      mapLayers[key].colorRange[10], viridis20[10],
+      mapLayers[key].colorRange[11], viridis20[11],
+      mapLayers[key].colorRange[12], viridis20[12],
+      mapLayers[key].colorRange[13], viridis20[13],
+      mapLayers[key].colorRange[14], viridis20[14],
+      mapLayers[key].colorRange[15], viridis20[15],
+      mapLayers[key].colorRange[16], viridis20[16],
+      mapLayers[key].colorRange[17], viridis20[17],
+      mapLayers[key].colorRange[18], viridis20[18],
+      mapLayers[key].colorRange[19], viridis20[19]
+    ]);
+  }
+
+  /** Updates the individual layers according to the new map layers. */
+  function filterUpdate() {
+    // Single incidents
+    map.setFilter('Individual Incidents', mapboxFilter);
+    // Cluster Layer
+    let clusterData = mapLayers.indiv.geojson.features;
+    Object.keys(filterAttributes).forEach( function(attribute) {
+      if(filterAttributes[attribute].active) {clusterData = clusterData.filter(filterAttributes[attribute].clusterFilterFunction);}
+    });
+    map.getSource('sffcCluster').setData(turf.featureCollection(clusterData));
+    // Choropleth layers
+    if(activePolygonLayer) {refreshChoropleth(activePolygonLayer);}
+  }
+
+  //** Modifies the sets of indices to match a particular variable */
+  function singleValueIndices(key, attribute, value) {
+    mapLayers[key].indices[attribute] = [];
+    for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
+      mapLayers[key].indices[attribute][i] = new Set();
+      let j = mapLayers[key].geojson.features[i].properties[attribute].indexOf(value);
+      while (j != -1) {
+        mapLayers[key].indices[attribute][i].add(j);
+        j = mapLayers[key].geojson.features[i].properties[attribute].indexOf(value, j + 1);
+      }
     }
   }
-}
 
-//** Modifies the sets of indices according to a function */
-function functionValueIndices(key, attribute) {
-  mapLayers[key].indices[attribute] = [];
-  for (var i = 0; i < mapLayers[key].geojson.features.length; i++) {
-    mapLayers[key].indices[attribute][i] = new Set();
-    var j = mapLayers[key].geojson.features[i].properties[attribute].findIndex(filterAttributes[attribute].choroplethFilterFunction);
-    var k = j;
-    while (k != -1) {
-      mapLayers[key].indices[attribute][i].add(j);
-      k = mapLayers[key].geojson.features[i].properties[attribute].slice(j + 1).findIndex(filterAttributes[attribute].choroplethFilterFunction);
-      j = j + 1 + k;
+  //** Modifies the sets of indices according to a function */
+  function functionValueIndices(key, attribute) {
+    mapLayers[key].indices[attribute] = [];
+    for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
+      mapLayers[key].indices[attribute][i] = new Set();
+      let j = mapLayers[key].geojson.features[i].properties[attribute].findIndex(filterAttributes[attribute].choroplethFilterFunction);
+      let k = j;
+      while (k != -1) {
+        mapLayers[key].indices[attribute][i].add(j);
+        k = mapLayers[key].geojson.features[i].properties[attribute].slice(j + 1).findIndex(filterAttributes[attribute].choroplethFilterFunction);
+        j = j + 1 + k;
+      }
     }
   }
-}
 
-</script>
+  </script>
 </body>
