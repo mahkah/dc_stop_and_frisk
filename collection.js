@@ -1,12 +1,11 @@
 fetch('https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js')
     .then(response => response.text())
     .then(text => eval(text))
-    .then(() => { /* now you can use your library */ })
+
 
 fetch('https://npmcdn.com/@turf/turf/turf.min.js')
     .then(response => response.text())
     .then(text => eval(text))
-    .then(() => { /* now you can use your library */ })
 
 
 function loadData(filename, branch) {

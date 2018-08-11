@@ -60,7 +60,6 @@
     border-radius: 3px;
     border: 1px solid rgba(0,0,0,0.4);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    visibility: hidden;
   }
   .map-overlay {
     position: absolute;
@@ -71,6 +70,9 @@
     font-family: Arial, sans-serif;
     overflow: auto;
     border-radius: 3px;
+  }
+  #filters {
+    display: none;
   }
   /*Color Legend*/
   #legend {
@@ -162,60 +164,74 @@
   <div id='filterConsole'>
     <h1>Police Stops in Washington D.C.</h1>
     <h2>About the Data</h2>
-    <p>This map visulizes <a href='https://mpdc.dc.gov/node/1310236'>the MPD's stop and frisk dataset</a>, which contains limited information about stops made from 2010 to 2017. Of these, xxxx stops could not be mapped due to missing or incomplete addresses.</p>
-    <p>Read an <a href='https://github.com/GWarrenn'>analysis of this data</a>, explore <a href='https://github.com/mahkah/dc_stop_and_frisk/tree/master/transformed_data'>the underlying data</a>, or view <a href='https://github.com/mahkah/dc_stop_and_frisk/blob/master/index.html'>the source code</a>.</p>
-    <p>Curious what facts gave police gave police <a href='https://www.law.cornell.edu/wex/stop_and_frisk'>reasonable suspecion to make a stop</a>, or what stops esculated to frisks or arrests? Hold the MPD and Mayor Bowser accountable for <a href=''>failing to comply with data collection laws</a>.</p>
-    <p></p>
-    <h2>Filter the Data</h2>
-    <!--Race/Ethn Filter-->
-    <div class='session' id='ethn-buttons'>
-      <h3>Race/Ethnicity</h3>
-      <div class='row' id='ethn-filters'>
-        <input id='all-race' type='radio' name='toggle-race' value='All' checked='checked'>
-        <label for='all-race'>All</label>
-        <input id='black' type='radio' name='toggle-race' value='Black'>
-        <label for='black'>Black</label>
-        <input id='white' type='radio' name='toggle-race' value='White'>
-        <label for='white'>White</label>
-        <input id='hisp' type='radio' name='toggle-race' value='Hispanic or Latino'>
-        <label for='hisp'>Hispanic or Latino</label>
-        <input id='azn' type='radio' name='toggle-race' value='Asian'>
-        <label for='azn'>Asian</label>
-        <input id='other' type='radio' name='toggle-race' value='Other'>
-        <label for='other'>Other</label>
+    <p>
+      This map visualizes <a href='https://mpdc.dc.gov/node/1310236'>the MPD's
+      stop and frisk dataset</a>, which contains limited information about stops
+      made from 2010 to 2017. Of these, xxxx stops could not be mapped due to
+      missing or incomplete addresses.
+    </p>
+    <p>
+      Read an <a href='https://github.com/GWarrenn'>analysis of this data</a>,
+      explore <a href='https://github.com/mahkah/dc_stop_and_frisk/tree/master/transformed_data'>
+      the underlying data</a>, or view
+      <a href='https://github.com/mahkah/dc_stop_and_frisk/blob/master/index.html'>
+      the source code</a>.
+    </p>
+    <p>
+      Curious what facts gave police gave police
+      <a href='https://www.law.cornell.edu/wex/stop_and_frisk'>reasonable
+        suspicion to make a stop</a>, or what stops escalated to frisks or
+        arrests? Hold the MPD and Mayor Bowser accountable for <a href=''>
+          failing to comply with data collection laws</a>.
+    </p>
+    <div id='filters'>
+      <h2>Filter the Data</h2>
+      <!--Race/Ethn Filter-->
+      <div class='session' id='ethn-buttons'>
+        <h3>Race/Ethnicity</h3>
+        <div class='row' id='ethn-filters'>
+          <input id='all-race' type='radio' name='toggle-race' value='All' checked='checked'>
+          <label for='all-race'>All</label>
+          <input id='black' type='radio' name='toggle-race' value='Black'>
+          <label for='black'>Black</label>
+          <input id='white' type='radio' name='toggle-race' value='White'>
+          <label for='white'>White</label>
+          <input id='hisp' type='radio' name='toggle-race' value='Hispanic or Latino'>
+          <label for='hisp'>Hispanic or Latino</label>
+          <input id='azn' type='radio' name='toggle-race' value='Asian'>
+          <label for='azn'>Asian</label>
+          <input id='other' type='radio' name='toggle-race' value='Other'>
+          <label for='other'>Other</label>
+        </div>
       </div>
-    </div>
-    <!--Gender Filter-->
-    <div class='session' id='gender-buttons'>
-      <h3>Gender</h3>
-      <div class='row' id='gender-filters'>
-        <input id='all-gender' type='radio' name='toggle-gender' value='All' checked='checked'>
-        <label for='all-gender'>All</label>
-        <input id='male' type='radio' name='toggle-gender' value='Male'>
-        <label for='male'>Men</label>
-        <input id='women' type='radio' name='toggle-gender' value='Female'>
-        <label for='women'>Women</label>
+      <!--Gender Filter-->
+      <div class='session' id='gender-buttons'>
+        <h3>Gender</h3>
+        <div class='row' id='gender-filters'>
+          <input id='all-gender' type='radio' name='toggle-gender' value='All' checked='checked'>
+          <label for='all-gender'>All</label>
+          <input id='male' type='radio' name='toggle-gender' value='Male'>
+          <label for='male'>Men</label>
+          <input id='women' type='radio' name='toggle-gender' value='Female'>
+          <label for='women'>Women</label>
+        </div>
       </div>
+      <!--Age Filter-->
+      <h3>Age: <label id='active-age'>Juveniles and Adults 18-75</label></h3>
+      <input type="checkbox" id="juvenile-age" name="juvenile-age" value="juvenile-age" checked>
+      <label for="juvenile-age">Juveniles</label>
+      <div> <input type="checkbox" id="adult-age" name="adult-age" value="adult-age" checked>
+      <label for="adult-age">Adults</label>
+      <div id="age-slider"></div></div>
+      <div></div>
+      <!--Date Slider-->
+      <h3>Date Range: <br>
+      <label id ='event-start'>Friday, 1st January 2010</label> to <br><label id ='event-end'>Saturday, 31st December 2016</label></h3>
+      <div id="date-slider"></div>
+      <button class='btn' id='all-dates-btn'>Entire Period</button>
+      <button class='btn' id='year-btn'>Year</button>
+      <button class='btn' id='month-btn'>Month</button>
     </div>
-    <!--Age Filter-->
-    <h3>Age: <label id='active-age'>Juveniles and Adults 18-75</label></h3>
-    <input type="checkbox" id="juvenile-age" name="juvenile-age" value="juvenile-age" checked>
-    <label for="juvenile-age">Juveniles</label>
-    <div> <input type="checkbox" id="adult-age" name="adult-age" value="adult-age" checked>
-    <label for="adult-age">Adults</label>
-    <div id="age-slider"></div></div>
-    <div></div>
-    <!--Date Slider-->
-    <h3>Date Range: <br>
-    <label id ='event-start'>Friday, 1st January 2010</label> to <br><label id ='event-end'>Saturday, 31st December 2016</label></h3>
-    <div id="date-slider"></div>
-    <button class='btn' id='all-dates-btn'>Entire Period</button>
-    <button class='btn' id='year-btn'>Year</button>
-    <button class='btn' id='month-btn'>Month</button>
-
-
-
-
   </div>
   <div class='map-overlay' id='legend'>
     <div id='tooltip-heading'><h4>Region Information</h4></div>
@@ -797,7 +813,7 @@
     }
 
     // Turn on filter control
-    filterConsole.style.visibility = 'visible'
+    filters.style.display = 'inline'
 
     // Choropleth Maps
     polygonLayers(branch);
