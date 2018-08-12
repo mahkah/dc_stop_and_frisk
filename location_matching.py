@@ -21,7 +21,9 @@ import numpy as np
 import pandas as pd
 import re
 import json
+import time
 
+if __name__ == '__main__': main()
 
 
 def main():
@@ -39,10 +41,23 @@ def main():
                                   'subject_race', 'subject_ethnicity', 
                                   'subject_gender', 'subject_age'))
     
+    sf1_df_17 = pd.read_excel('original_data/SF_Field Contact_CY2017.xlsx', 
+                           names=('incident_type', 'incident_date', 'year', 'data_type', 
+                                  'subject_race', 'subject_gender', 'subject_ethnicity', 
+                                  'block_address', 'district', 'psa', 'subject_age'))
+    
+    sf2_df_17 = pd.read_excel('original_data/SF_Field Contact_CY2017.xlsx', sheet_name=1,
+                           names=('incident_date', 'year', 'block_address', 'district', 
+                                  'psa', 'incident_type', 'cause', 'data_type', 
+                                  'subject_race', 'subject_ethnicity', 
+                                  'subject_gender', 'subject_age'))
+    
+    sf1_df = sf1_df.append(sf1_df_17, ignore_index=True)
+    sf2_df = sf2_df.append(sf2_df_17, ignore_index=True)
+    
     # From: http://opendata.dc.gov/datasets/block-centroids/data
     block_df = pd.read_excel('original_data/Block_Centroids.xlsx')
     block_df.set_index('PSEUDO_OBJECTID', inplace=True, drop=False)
-    
     
     # Geocode Incidents
     sf1_df = find_blocks(sf1_df, 'block_address', block_df, details=True)
@@ -53,7 +68,6 @@ def main():
                    -3: 'Unmatchable block', -4: 'Unmatchable corner',  -5: 'Other unmatchable address'}
     sf_located['block_match'] = sf_located['block_match'].map(match_codes)
     print(sf_located['block_match'].value_counts(normalize=True))
-    
     
     # Recoding
     sf_located['subject_race_ethn'] = sf_located['subject_race']
@@ -74,31 +88,33 @@ def main():
         sf_located[col] = sf_located[col].replace(np.nan, 'Unknown', regex=True)
         sf_located[col] = sf_located[col].replace('', 'Unknown', regex=True)
     
-    
     # Export
-    sf_located.to_csv('transformed_data/SF_Field Contact_02202018_locations.csv', index=False)
+    sf_located.to_csv('transformed_data/SF_Field Contact_locations.csv', index=False)
     
     # Minimize geojson file size
-    geo_df = sf_located.loc[sf_located['block_id'] > 0]
+    geo_df = sf_located.loc[sf_located['block_match'] == 'Matched']
 #    recode_dict = {'Black': 1, 'White': 2, 'Hispanic or Latino': 3, 'Asian': 4, 'Other': 5, 'Unknown': -1}
 #    geo_df['race'] = geo_df['subject_race_ethn'].map(recode_dict)
 #    recode_dict = {'Male': 1, 'Female': 2, 'Unknown': -1}
 #    geo_df['gen'] = geo_df['subject_gender'].map(recode_dict)
     geo_df['race'] = geo_df['subject_race_ethn']
+    recode_dict = {'Black': 1, 'White': 2, 'Hispanic or Latino': 3, 'Asian': 4, 'Other': 5, 'Unknown': 6}
+    geo_df['race'].replace(recode_dict, inplace=True)
     geo_df['gen'] = geo_df['subject_gender']
+    recode_dict = {'Male': 0, 'Female': 1, 'Unknown': 3}
+    geo_df['gen'].replace(recode_dict, inplace=True)
     geo_df['age'] = geo_df['subject_age']
     recode_dict = {'Juvenile': 0, 'Unknown': -1}
     geo_df['age'].replace(recode_dict, inplace=True)
-    geo_df['yr'] = geo_df['year']
-    geo_df['mon'] = geo_df['month']
-    geo_df['day'] = geo_df['day']
+    geo_df['date'] = geo_df.apply(lambda row: time.mktime(row['incident_date'].timetuple()), axis=1)
     geo_df['hr'] = geo_df['hour']
+    geo_df['force'] = geo_df['incident_type']
+    recode_dict = {'Stop & Frisk': 1, 'Pedestrian Stop': 0, 'Vehicle Stop': 0, 'Bicycle Stop': 0}
+    geo_df['force'].replace(recode_dict, inplace=True)
     geo_df['idx'] = geo_df.index
-
     
-    
-    geojson = df_to_geojson(geo_df, ['race', 'gen', 'age', 'yr', 'mon', 'day', 'hr', 'idx'], lat='Y', lon='X') 
-    output_filename = 'transformed_data/SF_Field_Contact_02202018_locations.geojson'
+    geojson = df_to_geojson(geo_df, ['race', 'gen', 'age', 'date', 'hr', 'force', 'idx'], lat='Y', lon='X') 
+    output_filename = 'transformed_data/SF_Field_Contact_locations.geojson'
     with open(output_filename, 'w') as output_file:
         output_file.write('')
         json.dump(geojson, output_file, indent=2)
@@ -119,7 +135,8 @@ def spell_check(address):
                    'NORTH CAPITOL NE': 'NORTH CAPITOL STREET', '19THST': '19TH STREET',
                    '7TH T': '7TH STREET', 'NEW YORK AVENE NE': 'NEW YORK AVENUE NE',
                    'ST;NW': 'ST NW', '13 TH': '13TH', 'N CAP ST': 'NORTH CAPITOL ST', 
-                   'ECAPITAL ST': 'EAST CAPITOL ST', 'BLK OF': 'BLOCK OF', 'BLK': 'BLOCK OF'}
+                   'ECAPITAL ST': 'EAST CAPITOL ST', 'BLK OF': 'BLOCK OF', 'BLK': 'BLOCK OF',
+                   '31RST': '31ST', 'CAPIOL': 'CAPITOL'}
     for k, v in spelling_counts.items():
         m = re.match('^(.* )' + k + '(.*)$', address)
         if m:
@@ -231,12 +248,15 @@ def clean_address(address):
         if m: 
             address = m.group(1) + m.group(2)
     
-    ### North/South/East Capitol Street - The Snowflake Street
+    ### North/South/East Capitol Street - The Snowflake Streets
     # The boundary streets shouldn't have quadrants
     if re.match('(.* CAPITOL ST)$', address):
         address = re.match('(.* CAPITOL ST)$', address).group(1) + 'REET'
     if re.match('(.* CAPITOL STREET) [NS][WE]$', address):
         address = re.match('(.* CAPITOL STREET) [NS][WE]$', address).group(1)
+    if re.match('(.* CAPITOL STREET) [NS][WE]( [&/].*)$', address):
+        m = re.match('(.* CAPITOL STREET) [NS][WE]( [&/].*)$', address)
+        address = m.group(1) + m.group(2)
     
     ### Numbered Streets
     # Fixing numbered streets that lack their suffix (e.g. 1 -> 1ST)
@@ -371,31 +391,43 @@ def find_blocks(df_sf, addres_col, block_df, details=False):
     df['ba_clean'] = df['ba_clean'].apply(internal_street_abriev)
     df['ba_clean'] = df['ba_clean'].apply(clean_address)
     df['block_id'] = df['ba_clean'].apply(block_finder, block_df=block_df)
+    
     df['block_match'] = df['block_id']
     df.loc[df['block_match'] > 0, 'block_match'] = 1
     df['original_index'] = df.index
     
+    ### Join with block data
+    df = df.join(block_df[['X', 'Y']], on='block_id')
+    
+    # Deal with the missing block: 400 Block of 2nd Street NW (38.895455, -77.013668)
+    df.loc[df['ba_clean'] == '400 BLOCK OF 2ND STREET NW', 'X'] = -77.013668
+    df.loc[df['ba_clean'] == '400 BLOCK OF 2ND STREET NW', 'Y'] = 38.895455
+    df.loc[df['ba_clean'] == '400 BLOCK OF 2ND STREET NW', 'block_match'] = 1
+    
+    
     ### Match Assessment
     # BLOCK OF Pattern
-    if details == True:
-        print(df.loc[df['block_id']==-3, 'ba_clean'].value_counts())
-    unclassified_bo = len(df.loc[df['block_id']==-3, addres_col])
+    print('\nUnmatchable block')
+    unclassified_bo = len(df.loc[df['block_match']==-3, addres_col])
     total_bo = df[addres_col].str.count('^([0-9]+) BLOCK OF (.*)$').sum() + df[addres_col].str.count('^([0-9]+) B/O (.*)$').sum()
     print('Block of pattern: ' + str((total_bo-unclassified_bo)/total_bo))
+    if details == True:
+        print(df.loc[df['block_match']==-3, 'ba_clean'].value_counts())
     
     # CORNER Pattern
-    if details == True:
-        print(df.loc[df['block_id']==-4, 'ba_clean'].value_counts())
-    unclassified_bo = len(df.loc[df['block_id']==-4, addres_col])
+    print('\nUnmatchable corners')
+    unclassified_bo = len(df.loc[df['block_match']==-4, addres_col])
     total_bo = df[addres_col].str.count('^(.*) [/&] (.*)$').sum()
     print('Corner pattern: ' + str((total_bo-unclassified_bo)/total_bo))
+    if details == True:
+        print(df.loc[df['block_match']==-4, 'ba_clean'].value_counts())
     
     # Other Pattern
+    print('\nOther unmatchable address')
     if details == True:
-        print(df.loc[df['block_id']==-5, 'ba_clean'].value_counts())
-    
-    ### Join with block data
-    return df.join(block_df[['X', 'Y']], on='block_id')
+        print(df.loc[df['block_match']==-5, 'ba_clean'].value_counts())
+        
+    return df
 
 
 
@@ -416,4 +448,3 @@ def df_to_geojson(df, properties, lat='latitude', lon='longitude'):
     return geojson
 
 
-if __name__ == '__main__': main()

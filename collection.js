@@ -19,12 +19,12 @@ function loadData(filename, branch) {
   });
 }
 
-var psaGEOJSON = loadData("Police_Service_Areas.geojson", 'master');
-var censusTractGEOJSON = loadData("Census_Tracts_in_2010.geojson", 'master');
-var neighborhoodGEOJSON = loadData("Neighborhood_Clusters.geojson", 'master');
-var policeSectorGEOJSON = loadData("Police_Sectors.geojson", 'master');
-var wardGEOJSON = loadData("Ward_from_2012.geojson", 'master');
-var sffcGEOJSON = loadData("SF_Field_Contact_02202018_locations.geojson", 'mahkah-collection-upload');
+var psaGEOJSON = loadData("original_data/Police_Service_Areas.geojson", 'master');
+var censusTractGEOJSON = loadData("original_data/Census_Tracts_in_2010.geojson", 'master');
+var neighborhoodGEOJSON = loadData("original_data/Neighborhood_Clusters.geojson", 'master');
+var policeSectorGEOJSON = loadData("original_data/Police_Sectors.geojson", 'master');
+var wardGEOJSON = loadData("original_data/Ward_from_2012.geojson", 'master');
+var sffcGEOJSON = loadData("transformed_data/SF_Field_Contact_02202018_locations.geojson", 'mahkah-update-2017-data');
 
 /** Appends an array of attributes on all the incidents that occured in each polygon. */
 function collectProperties(polygonGEOJSON, incidentGEOJSON, filterArray) {
@@ -35,7 +35,7 @@ function collectProperties(polygonGEOJSON, incidentGEOJSON, filterArray) {
   return collectedGEOJSON;
 }
 
-var filterAttributes = ['race', 'gen', 'age', 'yr', 'mon', 'day', 'hr'];
+var filterAttributes = ['race', 'gen', 'age', 'date', 'force'];
 
 var psaProp = collectProperties(psaGEOJSON.responseJSON, sffcGEOJSON.responseJSON, filterAttributes);
 var censusTractProp = collectProperties(censusTractGEOJSON.responseJSON, sffcGEOJSON.responseJSON, filterAttributes);
