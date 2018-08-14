@@ -74,6 +74,9 @@
   #filters {
     display: none;
   }
+  #date-control {
+    display: none;
+  }
   /*Color Legend*/
   #legend {
     padding: 5px;
@@ -167,7 +170,7 @@
     <p>
       This map visualizes <a href='https://mpdc.dc.gov/node/1310236'>the MPD's
       stop and frisk dataset</a>, which contains limited information about stops
-      made from 2010 to 2017. Of these, xxxx stops could not be mapped due to
+      made from 2010 to 2017. Of these, 3050 stops could not be mapped due to
       missing or incomplete addresses.
     </p>
     <p>
@@ -178,7 +181,7 @@
       the source code</a>.
     </p>
     <p>
-      Curious what facts gave police gave police
+      Curious what facts gave police
       <a href='https://www.law.cornell.edu/wex/stop_and_frisk'>reasonable
         suspicion to make a stop</a>, or what stops escalated to frisks or
         arrests? Hold the MPD and Mayor Bowser accountable for <a href=''>
@@ -225,12 +228,14 @@
       <div id="age-slider"></div></div>
       <div></div>
       <!--Date Slider-->
-      <h3>Date Range: <br>
-      <label id ='event-start'>Friday, 1st January 2010</label> to <br><label id ='event-end'>Saturday, 31st December 2016</label></h3>
-      <div id="date-slider"></div>
-      <button class='btn' id='all-dates-btn'>Entire Period</button>
-      <button class='btn' id='year-btn'>Year</button>
-      <button class='btn' id='month-btn'>Month</button>
+      <div id=date-control>
+        <h3>Date Range: <br>
+        <label id ='event-start'>Friday, 1st January 2010</label> to <br><label id ='event-end'>Saturday, 31st December 2016</label></h3>
+        <div id="date-slider"></div>
+        <button class='btn' id='all-dates-btn'>Entire Period</button>
+        <button class='btn' id='year-btn'>Year</button>
+        <button class='btn' id='month-btn'>Month</button>
+      </div>
     </div>
   </div>
   <div class='map-overlay' id='legend'>
