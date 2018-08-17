@@ -24,7 +24,7 @@ var censusTractGEOJSON = loadData("original_data/Census_Tracts_in_2010.geojson",
 var neighborhoodGEOJSON = loadData("original_data/Neighborhood_Clusters.geojson", 'master');
 var policeSectorGEOJSON = loadData("original_data/Police_Sectors.geojson", 'master');
 var wardGEOJSON = loadData("original_data/Ward_from_2012.geojson", 'master');
-var sffcGEOJSON = loadData("transformed_data/SF_Field_Contact_02202018_locations.geojson", 'mahkah-update-2017-data');
+var sffcGEOJSON = loadData("transformed_data/SF_Field_Contact_locations.geojson", 'mahkah-update-2017-data');
 
 /** Appends an array of attributes on all the incidents that occured in each polygon. */
 function collectProperties(polygonGEOJSON, incidentGEOJSON, filterArray) {
@@ -35,13 +35,36 @@ function collectProperties(polygonGEOJSON, incidentGEOJSON, filterArray) {
   return collectedGEOJSON;
 }
 
-var filterAttributes = ['race', 'gen', 'age', 'date', 'force'];
+var filterAttributes = ['race', 'gen', 'age', 'date', 'force', 'hr'];
 
 var psaProp = collectProperties(psaGEOJSON.responseJSON, sffcGEOJSON.responseJSON, filterAttributes);
 var censusTractProp = collectProperties(censusTractGEOJSON.responseJSON, sffcGEOJSON.responseJSON, filterAttributes);
 var neighborhoodProp = collectProperties(neighborhoodGEOJSON.responseJSON, sffcGEOJSON.responseJSON, filterAttributes);
 var policeSectorProp = collectProperties(policeSectorGEOJSON.responseJSON, sffcGEOJSON.responseJSON, filterAttributes);
 var wardProp = collectProperties(wardGEOJSON.responseJSON, sffcGEOJSON.responseJSON, filterAttributes);
+console.log("Done collecting features");
+
+Object.keys(psaProp.features).forEach(function(key, i) {
+  psaProp.features[i].properties.polygonName = "Police Service Area " + psaProp.features[i].properties.name;
+});
+
+Object.keys(censusTractProp.features).forEach(function(key, i) {
+  censusTractProp.features[i].properties.polygonName = "Census Tract " + censusTractProp.features[i].properties.TRACT;
+});
+
+Object.keys(neighborhoodProp.features).forEach(function(key, i) {
+  neighborhoodProp.features[i].properties.polygonName = neighborhoodProp.features[i].properties.NBH_NAMES;
+});
+
+
+Object.keys(policeSectorProp.features).forEach(function(key, i) {
+  policeSectorProp.features[i].properties.polygonName = "Police Sector " + policeSectorProp.features[i].properties.name;
+});
+
+Object.keys(wardProp.features).forEach(function(key, i) {
+  wardProp.features[i].properties.polygonName = wardProp.features[i].properties.name;
+});
+
 
 (function(console){
 
