@@ -89,6 +89,7 @@
     font-size: 13px;
     font-family: 'Open Sans', sans-serif;
     visibility: hidden;
+    width: 258px;
   }
   .legend-min {
     display: inline-block;
@@ -170,7 +171,7 @@
     <p>
       This map visualizes <a href='https://mpdc.dc.gov/node/1310236'>the MPD's
       stop and frisk dataset</a>, which contains limited information about stops
-      made from 2010 to 2017. Of these, 3050 stops could not be mapped due to
+      made from 2010 to 2017. Of these, 3050 stops (8%) could not be mapped due to
       missing or incomplete addresses.
     </p>
     <p>
@@ -181,14 +182,25 @@
       the source code</a>.
     </p>
     <p>
-      Curious what facts gave police
-      <a href='https://www.law.cornell.edu/wex/stop_and_frisk'>reasonable
-        suspicion to make a stop</a>, or what stops escalated to frisks or
-        arrests? Hold the MPD and Mayor Bowser accountable for <a href=''>
-          failing to comply with data collection laws</a>.
+      Curious what facts gave police <a href='https://www.law.cornell.edu/wex/stop_and_frisk'>
+        reasonable suspicion to make a stop</a>, or what stops escalated to frisks or
+        arrests? Hold the MPD and Mayor Bowser accountable for <a href='https://www.sptdc.com/get-involved-1'>
+        failing to comply with data collection laws</a>.
     </p>
     <div id='filters'>
       <h2>Filter the Data</h2>
+      <!--Forcible Stop Filter-->
+      <div class='session' id='ethn-buttons'>
+        <h3>Stop Type</h3>
+        <div class='row' id='force-filters'>
+          <input id='all-force' type='radio' name='toggle-force' value='All' checked='checked'>
+          <label for='all-force'>All</label>
+          <input id='forcible' type='radio' name='toggle-force' value='Forcible'>
+          <label for='forcible'>Forcible</label>
+          <input id='non-forcible' type='radio' name='toggle-force' value='Non-Forcible'>
+          <label for='non-forcible'>Non-Forcible</label>
+        </div>
+      </div>
       <!--Race/Ethn Filter-->
       <div class='session' id='ethn-buttons'>
         <h3>Race/Ethnicity</h3>
@@ -331,7 +343,7 @@
       'layerNames': ['Individual Incidents', 'clusters', 'Individual Incidents Count'],
       'label': 'Individual Incidents',
       'polygon': false,
-      'geojsonFilename': 'SF_Field_Contact_02202018_locations.geojson',
+      'geojsonFilename': 'SF_Field_Contact_locations.geojson',
       'defaultLayer': true,
       'mapboxSourceName': 'sffcCluster'
     },
@@ -390,6 +402,10 @@
   clusterFilterFunction: Function used to filter the cluster layer
   choroplethFilterFunction: Function used to filter the choropleth layer*/
   const filterAttributes = {
+    'force': {
+      'active': false,
+      'mapboxFilter': ['!=', ['string', ['get', 'force']], 'placeholder']
+    },
     'race': {
       'active': false,
       'mapboxFilter': ['!=', ['string', ['get', 'race']], 'placeholder']
@@ -402,16 +418,12 @@
       'active': false,
       'mapboxFilter': ['!=', ['number', ['get', 'age']], -10]
     },
-    'yr': {
+    'date': {
       'active': false,
-      'mapboxFilter': ['!=', ['number', ['get', 'yr']], 25]
-    },
-    'hr': {
-      'active': false,
-      'mapboxFilter': ['!=', ['number', ['get', 'hr']], 25]
-    },
+      'mapboxFilter': ['!=', ['number', ['get', 'date']], 25]
+    }
   };
-  const mapboxFilter = ['all']
+  const mapboxFilter = ['all'];
   Object.keys(filterAttributes).forEach( function(attribute, i) {
     mapboxFilter.push(filterAttributes[attribute].mapboxFilter);
   });
@@ -451,47 +463,6 @@
       });
     });
   }
-
-
-  // loadData('indiv', branch).then(function(v) {
-  //   console.log(mapLayers.indiv.geojsonFilename + " successfully loaded.");
-  //   mapLayers.indiv.geojson = v;
-  //
-  //
-  // })
-  // .catch(function(v) {
-  //   throw v;
-  // })
-
-
-
-
-
-
-
-
-   //http://www.macadamian.com/2017/04/11/javascript-promises-explained/
-   //https://stackoverflow.com/questions/14220321/how-do-i-return-the-response-from-an-asynchronous-call?noredirect=1&lq=1
-  // function indivCallback() {
-  //   mapLayers[key].geojson = result;
-  //
-  //   loadMap()
-  //
-  //   onMapLoad() {
-  //     plotindiv()
-  //     filters()
-  //     loadData() {
-  //       plotchoropleth()
-  //       buildLayerMenu()
-  //     }
-  //   }
-  // }
-
-
-
-
-
-
 
 
   // Build HTML Elements
@@ -645,16 +616,19 @@
 
     // Filters
     // Stop Type Filter
-    // document.getElementById('stop_filters').addEventListener('change', function(e) {
-    //   singleValueFilter('stop', e.target.value);
-    // });
+    document.getElementById('force-filters').addEventListener('change', function(e) {
+      const forceRecode = {'All': 'All', 'Forcible': 1, 'Non-Forcible': 0}
+      singleValueFilter('force', forceRecode[e.target.value]);
+    });
     // Ethnicity Filter
     document.getElementById('ethn-filters').addEventListener('change', function(e) {
-      singleValueFilter('race', e.target.value);
+      const raceRecode = {'All': 'All', 'Black': 1, 'White': 2, 'Hispanic or Latino': 3, 'Asian': 4, 'Other': 5, 'Unknown': 6}
+      singleValueFilter('race', raceRecode[e.target.value]);
     });
     // Gender Filter
     document.getElementById('gender-filters').addEventListener('change', function(e) {
-      singleValueFilter('gen', e.target.value);
+      const genderRecode = {'All': 'All', 'Male': 0, 'Female': 1, 'Unknown': 3}
+      singleValueFilter('gen', genderRecode[e.target.value]);
     });
     // Age Fliter
     document.getElementById('juvenile-age').addEventListener('change', ageFilter);
@@ -944,7 +918,7 @@
         layers: mapLayers[activePolygonLayer].layerNames
       });
       if (incident.length > 0) {
-        document.getElementById('tooltip-info').innerHTML = '<p>' + incident[0].properties.sffcCount + ' police stops<p>';
+        document.getElementById('tooltip-info').innerHTML = '<p>' + incident[0].properties.sffcCount + ' police stops in ' + incident[0].properties.polygonName + '</p>';
       } else {
         document.getElementById('tooltip-info').innerHTML = '<p>Hover over a region for more information.</p>';
       }
