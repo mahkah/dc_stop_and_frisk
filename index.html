@@ -858,7 +858,7 @@
 
       let maxSFFC = 0
       for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
-        mapLayers[key].geojson.features[i].properties.sffcCount = mapLayers[key].geojson.features[i].properties.hr.length;
+        mapLayers[key].geojson.features[i].properties.sffcCount = mapLayers[key].geojson.features[i].properties.force.length;
         if (mapLayers[key].geojson.features[i].properties.sffcCount > maxSFFC) {
           maxSFFC = mapLayers[key].geojson.features[i].properties.sffcCount;
         }
