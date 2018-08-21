@@ -8,12 +8,7 @@
 # Currently matches 92% of incidents (>30,000 in total). Of the remaining 
 # incidents, >70% have missing or incomplete addresses.
 #
-# Modified: 4/7/2018 (Export Format Updates)
-# 3/21/2018 (Initial Version)
 #####
-
-### Missing Blocks
-# 400 BLOCK OF 2ND STREET NW: (38.895470, -77.013673)
 
 
 
@@ -23,7 +18,7 @@ import re
 import json
 import time
 
-if __name__ == '__main__': main()
+
 
 
 def main():
@@ -88,6 +83,10 @@ def main():
         sf_located[col] = sf_located[col].replace(np.nan, 'Unknown', regex=True)
         sf_located[col] = sf_located[col].replace('', 'Unknown', regex=True)
     
+    sf_located['force'] = sf_located['incident_type']
+    recode_dict = {'Stop & Frisk': 1, 'Pedestrian Stop': 0, 'Vehicle Stop': 0, 'Bicycle Stop': 0}
+    sf_located['force'].replace(recode_dict, inplace=True)
+    
     # Export
     sf_located.to_csv('transformed_data/SF_Field Contact_locations.csv', index=False)
     
@@ -108,9 +107,6 @@ def main():
     geo_df['age'].replace(recode_dict, inplace=True)
     geo_df['date'] = geo_df.apply(lambda row: time.mktime(row['incident_date'].timetuple()), axis=1)
     geo_df['hr'] = geo_df['hour']
-    geo_df['force'] = geo_df['incident_type']
-    recode_dict = {'Stop & Frisk': 1, 'Pedestrian Stop': 0, 'Vehicle Stop': 0, 'Bicycle Stop': 0}
-    geo_df['force'].replace(recode_dict, inplace=True)
     geo_df['idx'] = geo_df.index
     
     geojson = df_to_geojson(geo_df, ['race', 'gen', 'age', 'date', 'hr', 'force', 'idx'], lat='Y', lon='X') 
@@ -384,7 +380,8 @@ def find_blocks(df_sf, addres_col, block_df, details=False):
     '''
     ### Clean up and find block id's
     df = df_sf
-    df['ba_clean'] = df[addres_col].str.replace(' B/O ', ' BLOCK OF ')
+    df['ba_clean'] = df[addres_col].copy()
+    df['ba_clean'] = df['ba_clean'].str.replace(' B/O ', ' BLOCK OF ')
     df['ba_clean'] = df['ba_clean'].apply(str).apply(spell_check)
     df['ba_clean'] = df['ba_clean'].apply(fix_ending)
     df['ba_clean'] = df['ba_clean'].apply(street_abriev)
@@ -446,5 +443,10 @@ def df_to_geojson(df, properties, lat='latitude', lon='longitude'):
             feature['properties'][prop] = row[prop]
         geojson['features'].append(feature)
     return geojson
+
+
+if __name__ == '__main__': main()
+
+
 
 
