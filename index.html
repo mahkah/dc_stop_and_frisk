@@ -1,3 +1,4 @@
+
 <head>
   <meta charset='utf-8' />
   <title>DC Stop and Frisk Map</title>
@@ -76,6 +77,9 @@
   }
   #date-control {
     display: none;
+  }
+  #error-message {
+    color: red;
   }
   /*Color Legend*/
   #legend {
@@ -249,6 +253,8 @@
         <button class='btn' id='month-btn'>Month</button>
       </div>
     </div>
+    <div id=error-message>
+    </div>
   </div>
   <div class='map-overlay' id='legend'>
     <div id='tooltip-heading'><h4>Region Information</h4></div>
@@ -294,11 +300,11 @@
       '#DFE318', '#E1E318', '#E4E318', '#E7E419', '#E9E419', '#ECE41A', '#EEE51B',
       '#F1E51C', '#F3E51E', '#F6E61F', '#F8E621', '#FAE622', '#FDE724'].reverse();
 
-    let viridisBar = '<span style="line-height: 0; display: inline-block; border: 1px solid black;">'
+    let viridisBar = '<span style="line-height: 0; display: inline-block; border: 1px solid black;">';
     vridis256.forEach(function(color) {
-      viridisBar = viridisBar + '<span style="width: 1px; height: 20px; background-color: ' + color + '; display: inline-block;"></span>'
+      viridisBar = viridisBar + '<span style="width: 1px; height: 20px; background-color: ' + color + '; display: inline-block;"></span>';
     });
-    viridisBar = viridisBar + '</span>'
+    viridisBar = viridisBar + '</span>';
     let colorBar = document.createElement('div');
     colorBar.innerHTML = '<h4>Incident Count</h4>' + viridisBar;
     legend.appendChild(colorBar);
@@ -316,7 +322,7 @@
     legend.appendChild(scale);
     // Create Color Rescale Checkbox
     let scaleControl = document.createElement('div');
-    scaleControl.innerHTML = '<br><input type="checkbox" id="filter-rescale" name="filter-rescale" value="filter-rescale" unchecked><label for="filter-rescale">Rescale color legend on filter change</label>'
+    scaleControl.innerHTML = '<br><input type="checkbox" id="filter-rescale" name="filter-rescale" value="filter-rescale" unchecked><label for="filter-rescale">Rescale color legend on filter change</label>';
     legend.appendChild(scaleControl);
   </script>
 
@@ -324,7 +330,7 @@
   <script>
   // Config
   mapboxgl.accessToken = 'pk.eyJ1IjoibWFoa2FoIiwiYSI6ImNqZW9zNHBvaTBhc2YzM2x0OWg3aXZ5dTAifQ.F1uwBes6jRJHdwqeSMiA-w';
-  const branch = 'master'
+  const branch = 'master';
 
   // Incident Data
   /*  Holds information about individual incidents and geographic features
@@ -449,22 +455,6 @@
 
 
 
-  function loadData(key, branch) {
-    return new Promise(function(resolve, reject) {
-      $.ajax({
-        url:"https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/" + branch + "/transformed_data/" + mapLayers[key].geojsonFilename,
-        dataType: "json",
-        success: function(result) {
-          resolve(result);
-        },
-        error: function(xhr) {
-          reject(xhr);
-        }
-      });
-    });
-  }
-
-
   // Build HTML Elements
   const ageSlider = document.getElementById('age-slider');
   noUiSlider.create(ageSlider, {
@@ -481,24 +471,25 @@
     behaviour: 'tap-drag'
   });
 
-  const dateSlider = document.getElementById('date-slider');
-  function timestamp(str){
-    return new Date(str).getTime();
-  }
-  const dateMin = timestamp('2010') + (5 * 60 * 60 * 1000); // 5 Hours is for EST?
-  const dateMax = timestamp('2017')
-  noUiSlider.create(dateSlider, {
-    range: {
-      'min': dateMin,
-      'max': dateMax
-    },
-    start: [timestamp('2010'), timestamp('2017')],
-    step: 30 * 24 * 60 * 60 * 1000,
-    connect: true,
-    direction: 'ltr',
-    orientation: 'horizontal',
-    behaviour: 'tap-drag'
-  });
+  // const dateSlider = document.getElementById('date-slider');
+  // function timestamp(str){
+  //   return new Date(str).getTime();
+  // }
+  // const dateMin = timestamp('2010') + (5 * 60 * 60 * 1000); // 5 Hours is for EST?
+  // const dateMax = timestamp('2017');
+  // noUiSlider.create(dateSlider, {
+  //   range: {
+  //     'min': dateMin,
+  //     'max': dateMax
+  //   },
+  //   start: [timestamp('2010'), timestamp('2017')],
+  //   step: 30 * 24 * 60 * 60 * 1000,
+  //   connect: true,
+  //   direction: 'ltr',
+  //   orientation: 'horizontal',
+  //   behaviour: 'tap-drag'
+  // });
+
 
 
   // Load map
@@ -511,13 +502,30 @@
 
 
 
-
   // Data Layers
   map.on('load', async function() {
-    mapLayers.indiv.geojson = await loadData('indiv', branch);
-    console.log(mapLayers.indiv.geojsonFilename + " successfully loaded.");
+    function loadData(key, branch) {
+      return new Promise(function(resolve, reject) {
+        $.ajax({
+          url:"https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/" + branch + "/transformed_data/" + mapLayers[key].geojsonFilename,
+          dataType: "json",
+          success: function(result) {
+            console.log(mapLayers[key].geojsonFilename + " successfully loaded.");
+            resolve(result);
+          },
+          error: function(xhr) {
+            console.log(err);
+            document.getElementById('error-message').innerHTML = '<p>' + err + '<br><br>Refresh the page or try again in a few minutes.</p>';
+            reject(xhr);
+          }
+        });
+      });
+    }
+
+
 
     // Incident Cluster Layer
+    mapLayers.indiv.geojson = await loadData('indiv', branch);
     map.addSource(mapLayers.indiv.mapboxSourceName, {
       type: 'geojson',
       data: mapLayers.indiv.geojson,
@@ -617,17 +625,17 @@
     // Filters
     // Stop Type Filter
     document.getElementById('force-filters').addEventListener('change', function(e) {
-      const forceRecode = {'All': 'All', 'Forcible': 1, 'Non-Forcible': 0}
+      const forceRecode = {'All': 'All', 'Forcible': 1, 'Non-Forcible': 0};
       singleValueFilter('force', forceRecode[e.target.value]);
     });
     // Ethnicity Filter
     document.getElementById('ethn-filters').addEventListener('change', function(e) {
-      const raceRecode = {'All': 'All', 'Black': 1, 'White': 2, 'Hispanic or Latino': 3, 'Asian': 4, 'Other': 5, 'Unknown': 6}
+      const raceRecode = {'All': 'All', 'Black': 1, 'White': 2, 'Hispanic or Latino': 3, 'Asian': 4, 'Other': 5, 'Unknown': 6};
       singleValueFilter('race', raceRecode[e.target.value]);
     });
     // Gender Filter
     document.getElementById('gender-filters').addEventListener('change', function(e) {
-      const genderRecode = {'All': 'All', 'Male': 0, 'Female': 1, 'Unknown': 3}
+      const genderRecode = {'All': 'All', 'Male': 0, 'Female': 1, 'Unknown': 3};
       singleValueFilter('gen', genderRecode[e.target.value]);
     });
     // Age Fliter
@@ -638,7 +646,227 @@
       document.getElementById("adult-age").checked = true;
       ageFilter();
     });
-    // Date Filter
+    // Date Filter (someday...)
+    // let dateValues = [
+    // 	document.getElementById('event-start'),
+    // 	document.getElementById('event-end')
+    // ];
+    //
+    // dateSlider.noUiSlider.on('update', function(values, handle) {
+    // 	dateFilterText(values, handle);
+    // });
+    //
+    // document.getElementById('all-dates-btn').addEventListener('click', function(e) {
+    //   dateFilterText([dateMin, dateMax], 0);
+    //   dateFilterText([dateMin, dateMax], 1);
+    //   dateSlider.noUiSlider.set([dateMin, dateMax]);
+    // });
+    //
+    // document.getElementById('year-btn').addEventListener('click', function(e) {
+    //   let currentMin = dateSlider.noUiSlider.get()[0];
+    //   let newMin = Number(currentMin);
+    //   let newMax = newMin + (365 * 24 * 60 * 60 * 1000);
+    //   if(newMax > dateMax) {
+    //     newMax = dateMax;
+    //     newMin = newMax - (365 * 24 * 60 * 60 * 1000);
+    //   }
+    //
+    //   dateFilterText([newMin, newMax], 0);
+    //   dateFilterText([newMin, newMax], 1);
+    //   dateSlider.noUiSlider.set([newMin, newMax]);
+    // });
+    //
+    // document.getElementById('month-btn').addEventListener('click', function(e) {
+    //   let currentMin = dateSlider.noUiSlider.get()[0];
+    //   let newMin = Number(currentMin);
+    //   let newMax = newMin + (30 * 24 * 60 * 60 * 1000);
+    //   if(newMax > dateMax) {
+    //     newMax = dateMax;
+    //     newMin = newMax - (30 * 24 * 60 * 60 * 1000);
+    //   }
+    //
+    //   dateFilterText([newMin, newMax], 0);
+    //   dateFilterText([newMin, newMax], 1);
+    //   dateSlider.noUiSlider.set([newMin, newMax]);
+    // });
+    //
+    // function dateFilterText(values, handle) {
+    //   dateValues[handle].innerHTML = formatDate(new Date(+values[handle]));
+    // }
+    //
+    // // Append a suffix to dates.
+    // // Example: 23 => 23rd, 1 => 1st.
+    // function nth (d) {
+    //   if(d>3 && d<21) return 'th';
+    //   switch (d % 10) {
+    //     case 1:  return "st";
+    //     case 2:  return "nd";
+    //     case 3:  return "rd";
+    //     default: return "th";
+    //   }
+    // }
+    //
+    // // Create a string representation of the date.
+    // function formatDate (date) {
+    //   const weekdays = [
+    //   		"Sunday", "Monday", "Tuesday",
+    //   		"Wednesday", "Thursday", "Friday",
+    //   		"Saturday"
+    //   	];
+    //   const	months = [
+    //   		"January", "February", "March",
+    //   		"April", "May", "June", "July",
+    //   		"August", "September", "October",
+    //   		"November", "December"
+    //   	];
+    //   return weekdays[date.getDay()] + ", " +
+    //     date.getDate() + nth(date.getDate()) + " " +
+    //     months[date.getMonth()] + " " +
+    //     date.getFullYear();
+    // }
+
+
+    // Functions for filtering data
+    /** Takes the intersection of two or more sets. */
+    function intersect(sets) {
+      let minSize = sets[0].size;
+      let shortSetIndex = 0;
+      for (let i = 1; i < sets.length; i++) {
+        if (sets[i].size < minSize) {
+          minSize = sets[i].size;
+          shortSetIndex = i;
+        }
+      }
+      // let shortSetIndex = sets.reduce(function(minI,el,i,arr) {return el.size<arr[minI].size ? i : minI;}, 0);
+      let shortSet = sets.splice(shortSetIndex, 1);
+      let count = sets.length;
+      let result = new Set(shortSet[0]);
+      shortSet[0].forEach(item => {
+        let i = count;
+        let allHave = true;
+        while (i--){
+          allHave = sets[i].has(item);
+          if (!allHave) { break }
+        }
+        if (!allHave) {
+          result.delete(item);
+        }
+      })
+      return result;
+    }
+
+    //** Modifies the sets of indices to match a particular variable */
+    function singleValueIndices(key, attribute, value) {
+      mapLayers[key].indices[attribute] = [];
+      for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
+        mapLayers[key].indices[attribute][i] = new Set();
+        let j = mapLayers[key].geojson.features[i].properties[attribute].indexOf(value);
+        while (j != -1) {
+          mapLayers[key].indices[attribute][i].add(j);
+          j = mapLayers[key].geojson.features[i].properties[attribute].indexOf(value, j + 1);
+        }
+      }
+    }
+
+    //** Modifies the sets of indices according to a function */
+    function functionValueIndices(key, attribute) {
+      mapLayers[key].indices[attribute] = [];
+      for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
+        mapLayers[key].indices[attribute][i] = new Set();
+        let j = mapLayers[key].geojson.features[i].properties[attribute].findIndex(filterAttributes[attribute].choroplethFilterFunction);
+        let k = j;
+        while (k != -1) {
+          mapLayers[key].indices[attribute][i].add(j);
+          k = mapLayers[key].geojson.features[i].properties[attribute].slice(j + 1).findIndex(filterAttributes[attribute].choroplethFilterFunction);
+          j = j + 1 + k;
+        }
+      }
+    }
+
+    /** Rescales choropleth fill colors based on the filtered dataset */
+    function colorRescale(key) {
+      if(filterRescale) {
+        var maxSFFC = 0;
+        for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
+          if (mapLayers[key].geojson.features[i].properties.sffcCount > maxSFFC) {
+            maxSFFC = mapLayers[key].geojson.features[i].properties.sffcCount;
+          }
+        }
+      } else {
+        var maxSFFC = mapLayers[key].colorDefaultMax;
+      }
+      if(maxSFFC < 19) {maxSFFC = 19;}
+      mapLayers[key].colorRange = [];
+      for (let i = 0; i < 20; i++) {
+        mapLayers[key].colorRange[i] = maxSFFC * (i / 19);
+      }
+      map.setPaintProperty(mapLayers[key].layerNames[0], 'fill-color', [
+        'interpolate',
+        ['linear'],
+        ['get', 'sffcCount'],
+        mapLayers[key].colorRange[0], viridis20[0],
+        mapLayers[key].colorRange[1], viridis20[1],
+        mapLayers[key].colorRange[2], viridis20[2],
+        mapLayers[key].colorRange[3], viridis20[3],
+        mapLayers[key].colorRange[4], viridis20[4],
+        mapLayers[key].colorRange[5], viridis20[5],
+        mapLayers[key].colorRange[6], viridis20[6],
+        mapLayers[key].colorRange[7], viridis20[7],
+        mapLayers[key].colorRange[8], viridis20[8],
+        mapLayers[key].colorRange[9], viridis20[9],
+        mapLayers[key].colorRange[10], viridis20[10],
+        mapLayers[key].colorRange[11], viridis20[11],
+        mapLayers[key].colorRange[12], viridis20[12],
+        mapLayers[key].colorRange[13], viridis20[13],
+        mapLayers[key].colorRange[14], viridis20[14],
+        mapLayers[key].colorRange[15], viridis20[15],
+        mapLayers[key].colorRange[16], viridis20[16],
+        mapLayers[key].colorRange[17], viridis20[17],
+        mapLayers[key].colorRange[18], viridis20[18],
+        mapLayers[key].colorRange[19], viridis20[19]
+      ]);
+    }
+
+    /** Updates the specified choropleth layer according to the new map layers. */
+    function refreshChoropleth(key) {
+      // Compute values for each region
+      for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
+        let indicesSets = [];
+        Object.keys(filterAttributes).forEach( function(attribute) {
+          if (filterAttributes[attribute].active) {indicesSets.push(mapLayers[key].indices[attribute][i]);}
+        });
+        if (indicesSets.length === 0) {
+          var intersectionIndices = new Set(Array.apply(null, {length: mapLayers[key].geojson.features[i].properties.race.length}).map(Number.call, Number));
+        } else if (indicesSets.length === 1) {
+          var intersectionIndices = indicesSets[0];
+        } else {
+          var intersectionIndices = intersect(indicesSets);
+        }
+        mapLayers[key].geojson.features[i].properties.sffcCount = intersectionIndices.size;
+      }
+      // Send values to map
+      map.getSource(mapLayers[key].mapboxSourceName).setData(mapLayers[key].geojson);
+      // Rescale colors as needed
+      if(filterRescale || mapLayers[key].colorDefaultMax != mapLayers[key].colorRange[19]) {
+        colorRescale(key);
+      }
+      // Set legend
+      document.getElementById('legend-max').innerHTML = Math.floor(mapLayers[key].colorRange[19]);
+    }
+
+    /** Updates the individual layers according to the new map layers. */
+    function filterUpdate() {
+      // Single incidents
+      map.setFilter('Individual Incidents', mapboxFilter);
+      // Cluster Layer
+      let clusterData = mapLayers.indiv.geojson.features;
+      Object.keys(filterAttributes).forEach( function(attribute) {
+        if(filterAttributes[attribute].active) {clusterData = clusterData.filter(filterAttributes[attribute].clusterFilterFunction);}
+      });
+      map.getSource('sffcCluster').setData(turf.featureCollection(clusterData));
+      // Choropleth layers
+      if(activePolygonLayer) {refreshChoropleth(activePolygonLayer);}
+    }
 
     /** Applies filters that call for a datafield to match a specific value*/
     function singleValueFilter(attribute, value) {
@@ -707,92 +935,12 @@
         // Refresh Filters
         filterUpdate();
       } else {
-        const age = document.getElementById('juvenile-age').checked ? 0 : -10
-        singleValueFilter('age', age)
+        const age = document.getElementById('juvenile-age').checked ? 0 : -10;
+        singleValueFilter('age', age);
       }
     };
 
-    // Date Slider
-    let dateValues = [
-    	document.getElementById('event-start'),
-    	document.getElementById('event-end')
-    ];
 
-    dateSlider.noUiSlider.on('update', function(values, handle) {
-    	dateFilterText(values, handle);
-    });
-
-    document.getElementById('all-dates-btn').addEventListener('click', function(e) {
-      dateFilterText([dateMin, dateMax], 0);
-      dateFilterText([dateMin, dateMax], 1);
-      dateSlider.noUiSlider.set([dateMin, dateMax]);
-    });
-
-    document.getElementById('year-btn').addEventListener('click', function(e) {
-      let currentMin = dateSlider.noUiSlider.get()[0];
-      let newMin = Number(currentMin);
-      let newMax = newMin + (365 * 24 * 60 * 60 * 1000);
-      if(newMax > dateMax) {
-        newMax = dateMax;
-        newMin = newMax - (365 * 24 * 60 * 60 * 1000);
-      }
-
-      dateFilterText([newMin, newMax], 0);
-      dateFilterText([newMin, newMax], 1);
-      dateSlider.noUiSlider.set([newMin, newMax]);
-    });
-
-    document.getElementById('month-btn').addEventListener('click', function(e) {
-      let currentMin = dateSlider.noUiSlider.get()[0];
-      let newMin = Number(currentMin);
-      let newMax = newMin + (30 * 24 * 60 * 60 * 1000);
-      if(newMax > dateMax) {
-        newMax = dateMax;
-        newMin = newMax - (30 * 24 * 60 * 60 * 1000);
-      }
-
-      dateFilterText([newMin, newMax], 0);
-      dateFilterText([newMin, newMax], 1);
-      dateSlider.noUiSlider.set([newMin, newMax]);
-    });
-
-    function dateFilterText(values, handle) {
-      dateValues[handle].innerHTML = formatDate(new Date(+values[handle]));
-    }
-
-    // Append a suffix to dates.
-    // Example: 23 => 23rd, 1 => 1st.
-    function nth (d) {
-      if(d>3 && d<21) return 'th';
-      switch (d % 10) {
-        case 1:  return "st";
-        case 2:  return "nd";
-        case 3:  return "rd";
-        default: return "th";
-      }
-    }
-
-    // Create a string representation of the date.
-    function formatDate (date) {
-      const weekdays = [
-      		"Sunday", "Monday", "Tuesday",
-      		"Wednesday", "Thursday", "Friday",
-      		"Saturday"
-      	];
-      const	months = [
-      		"January", "February", "March",
-      		"April", "May", "June", "July",
-      		"August", "September", "October",
-      		"November", "December"
-      	];
-      return weekdays[date.getDay()] + ", " +
-        date.getDate() + nth(date.getDate()) + " " +
-        months[date.getMonth()] + " " +
-        date.getFullYear();
-    }
-
-    // Turn on filter control
-    filters.style.display = 'inline'
 
     // Choropleth Maps
     polygonLayers(branch);
@@ -805,6 +953,9 @@
       });
       await Promise.all(polygonGeojsons);
 
+      // Turn on filter control
+      filters.style.display = 'inline';
+
       // Build layer selection menu and associated elements
       Object.keys(mapLayers).forEach(function(key) {
         // Build buttons for each layer
@@ -816,7 +967,7 @@
           link.className = '';
         }
         link.textContent = mapLayers[key].label;
-        link.id = key
+        link.id = key;
         // Add interactivity
         link.onclick = function(e) {
           const clickedLayer = this.id;
@@ -847,14 +998,13 @@
           // Toggle Legend
           legend.style.visibility = (activePolygonLayer) ? 'visible' : 'hidden';
         };
-        document.getElementById('menu').appendChild(link)
+        document.getElementById('menu').appendChild(link);
       });
     }
 
     /** Loads and plots choropleth maps. */
     async function plotChoropleth(key, branch) {
       mapLayers[key].geojson = await loadData(key, branch);
-      console.log(mapLayers[key].geojsonFilename + " successfully loaded.");
 
       let maxSFFC = 0
       for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
@@ -906,175 +1056,33 @@
           'fill-opacity': 0.7,
           'fill-outline-color': 'white'
         }
-      }, 'Individual Incidents')
+      }, 'Individual Incidents');
       map.setLayoutProperty(mapLayers[key].layerNames[0], 'visibility', 'none');
     }
-  }); // End of on map load actions
-
-  // Tooltip
-  map.on('mousemove', function(e) {
-    if(activePolygonLayer) {
-      let incident = map.queryRenderedFeatures(e.point, {
-        layers: mapLayers[activePolygonLayer].layerNames
-      });
-      if (incident.length > 0) {
-        document.getElementById('tooltip-info').innerHTML = '<p>' + incident[0].properties.sffcCount + ' police stops in ' + incident[0].properties.polygonName + '</p>';
-      } else {
-        document.getElementById('tooltip-info').innerHTML = '<p>Hover over a region for more information.</p>';
-      }
-    }
-  });
-
-  // Legend Checkbox
-  //if(filterRescale) {document.getElementById('filter-rescale').checked = true;}
-  document.getElementById('filter-rescale').addEventListener('change', function() {
-      filterRescale = document.getElementById('filter-rescale').checked
-      colorRescale(activePolygonLayer);
-      document.getElementById('legend-max').innerHTML = Math.floor(mapLayers[activePolygonLayer].colorRange[19]);
-  });
 
 
-  // Helper Functions
-  /** Takes the intersection of two or more sets. */
-  function intersect(sets) {
-    let minSize = sets[0].size;
-    let shortSetIndex = 0;
-    for (let i = 1; i < sets.length; i++) {
-      if (sets[i].size < minSize) {
-        minSize = sets[i].size;
-        shortSetIndex = i;
-      }
-    }
-    // let shortSetIndex = sets.reduce(function(minI,el,i,arr) {return el.size<arr[minI].size ? i : minI;}, 0);
-    let shortSet = sets.splice(shortSetIndex, 1);
-    let count = sets.length;
-    let result = new Set(shortSet[0]);
-    shortSet[0].forEach(item => {
-      let i = count;
-      let allHave = true;
-      while (i--){
-        allHave = sets[i].has(item)
-        if (!allHave) { break }
-      }
-      if (!allHave) {
-        result.delete(item);
-      }
-    })
-    return result;
-  }
 
-  /** Updates the specified choropleth layer according to the new map layers. */
-  function refreshChoropleth(key) {
-    // Compute values for each region
-    for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
-      let indicesSets = [];
-      Object.keys(filterAttributes).forEach( function(attribute) {
-        if (filterAttributes[attribute].active) {indicesSets.push(mapLayers[key].indices[attribute][i]);}
-      });
-      if (indicesSets.length === 0) {
-        var intersectionIndices = new Set(Array.apply(null, {length: mapLayers[key].geojson.features[i].properties.race.length}).map(Number.call, Number));
-      } else if (indicesSets.length === 1) {
-        var intersectionIndices = indicesSets[0];
-      } else {
-        var intersectionIndices = intersect(indicesSets);
-      }
-      mapLayers[key].geojson.features[i].properties.sffcCount = intersectionIndices.size;
-    }
-    // Send values to map
-    map.getSource(mapLayers[key].mapboxSourceName).setData(mapLayers[key].geojson);
-    // Rescale colors as needed
-    if(filterRescale || mapLayers[key].colorDefaultMax != mapLayers[key].colorRange[19]) {
-      colorRescale(key);
-    }
-    // Set legend
-    document.getElementById('legend-max').innerHTML = Math.floor(mapLayers[key].colorRange[19]);
-  }
-
-  /** Rescales choropleth fill colors based on the filtered dataset */
-  function colorRescale(key) {
-    if(filterRescale) {
-      var maxSFFC = 0;
-      for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
-        if (mapLayers[key].geojson.features[i].properties.sffcCount > maxSFFC) {
-          maxSFFC = mapLayers[key].geojson.features[i].properties.sffcCount;
+    // Wrap Up
+    // Tooltip
+    map.on('mousemove', function(e) {
+      if(activePolygonLayer) {
+        let incident = map.queryRenderedFeatures(e.point, {
+          layers: mapLayers[activePolygonLayer].layerNames
+        });
+        if (incident.length > 0) {
+          document.getElementById('tooltip-info').innerHTML = '<p>' + incident[0].properties.sffcCount + ' police stops in ' + incident[0].properties.polygonName + '</p>';
+        } else {
+          document.getElementById('tooltip-info').innerHTML = '<p>Hover over a region for more information.</p>';
         }
       }
-    } else {
-      var maxSFFC = mapLayers[key].colorDefaultMax;
-    }
-    if(maxSFFC < 19) {maxSFFC = 19;}
-    mapLayers[key].colorRange = [];
-    for (let i = 0; i < 20; i++) {
-      mapLayers[key].colorRange[i] = maxSFFC * (i / 19);
-    }
-    map.setPaintProperty(mapLayers[key].layerNames[0], 'fill-color', [
-      'interpolate',
-      ['linear'],
-      ['get', 'sffcCount'],
-      mapLayers[key].colorRange[0], viridis20[0],
-      mapLayers[key].colorRange[1], viridis20[1],
-      mapLayers[key].colorRange[2], viridis20[2],
-      mapLayers[key].colorRange[3], viridis20[3],
-      mapLayers[key].colorRange[4], viridis20[4],
-      mapLayers[key].colorRange[5], viridis20[5],
-      mapLayers[key].colorRange[6], viridis20[6],
-      mapLayers[key].colorRange[7], viridis20[7],
-      mapLayers[key].colorRange[8], viridis20[8],
-      mapLayers[key].colorRange[9], viridis20[9],
-      mapLayers[key].colorRange[10], viridis20[10],
-      mapLayers[key].colorRange[11], viridis20[11],
-      mapLayers[key].colorRange[12], viridis20[12],
-      mapLayers[key].colorRange[13], viridis20[13],
-      mapLayers[key].colorRange[14], viridis20[14],
-      mapLayers[key].colorRange[15], viridis20[15],
-      mapLayers[key].colorRange[16], viridis20[16],
-      mapLayers[key].colorRange[17], viridis20[17],
-      mapLayers[key].colorRange[18], viridis20[18],
-      mapLayers[key].colorRange[19], viridis20[19]
-    ]);
-  }
-
-  /** Updates the individual layers according to the new map layers. */
-  function filterUpdate() {
-    // Single incidents
-    map.setFilter('Individual Incidents', mapboxFilter);
-    // Cluster Layer
-    let clusterData = mapLayers.indiv.geojson.features;
-    Object.keys(filterAttributes).forEach( function(attribute) {
-      if(filterAttributes[attribute].active) {clusterData = clusterData.filter(filterAttributes[attribute].clusterFilterFunction);}
     });
-    map.getSource('sffcCluster').setData(turf.featureCollection(clusterData));
-    // Choropleth layers
-    if(activePolygonLayer) {refreshChoropleth(activePolygonLayer);}
-  }
-
-  //** Modifies the sets of indices to match a particular variable */
-  function singleValueIndices(key, attribute, value) {
-    mapLayers[key].indices[attribute] = [];
-    for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
-      mapLayers[key].indices[attribute][i] = new Set();
-      let j = mapLayers[key].geojson.features[i].properties[attribute].indexOf(value);
-      while (j != -1) {
-        mapLayers[key].indices[attribute][i].add(j);
-        j = mapLayers[key].geojson.features[i].properties[attribute].indexOf(value, j + 1);
-      }
-    }
-  }
-
-  //** Modifies the sets of indices according to a function */
-  function functionValueIndices(key, attribute) {
-    mapLayers[key].indices[attribute] = [];
-    for (let i = 0; i < mapLayers[key].geojson.features.length; i++) {
-      mapLayers[key].indices[attribute][i] = new Set();
-      let j = mapLayers[key].geojson.features[i].properties[attribute].findIndex(filterAttributes[attribute].choroplethFilterFunction);
-      let k = j;
-      while (k != -1) {
-        mapLayers[key].indices[attribute][i].add(j);
-        k = mapLayers[key].geojson.features[i].properties[attribute].slice(j + 1).findIndex(filterAttributes[attribute].choroplethFilterFunction);
-        j = j + 1 + k;
-      }
-    }
-  }
-
+    // Legend Checkbox
+    //if(filterRescale) {document.getElementById('filter-rescale').checked = true;}
+    document.getElementById('filter-rescale').addEventListener('change', function() {
+        filterRescale = document.getElementById('filter-rescale').checked;
+        colorRescale(activePolygonLayer);
+        document.getElementById('legend-max').innerHTML = Math.floor(mapLayers[activePolygonLayer].colorRange[19]);
+    });
+  }); // End of on map load actions
   </script>
 </body>
