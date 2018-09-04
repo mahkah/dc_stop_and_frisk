@@ -19,17 +19,17 @@ Read an analysis [here](https://rawgit.com/gwarrenn "DC Stop and Frisk Analysis"
 ## Note on Interpreting Choropleth Maps
 When utilizing the map, viewers should be aware that some geographic regions bisect stop and frisk hotspots and can distort patterns in police stops. For example, the individual incident layer clearly indicates that the area around Starburst Plaza saw an enormous number of police stops.
 
-![Stop and Frisk Incidents](../blob/master/images/starburst_1.png?raw=true "Stop and Frisk Incidents")
+![Stop and Frisk Incidents](https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/images/starburst_1.png "Stop and Frisk Incidents")
 <br>
 
 The neighborhood clusters centered around Starburst Plaza, those containing Trinidad and Kingman Park present a similar story. They have among the highest stop and frisk incident counts of all DC neighborhoods.
 
-![Neighborhoods](../blob/master/images/starburst_2.png?raw=true "Neighborhoods")
+![Neighborhoods](https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/images/starburst_2.png "Neighborhoods")
 <br>
 
 However, the smallest region, census tracts, does not suggest that this area had a particularly high number of stop and frisk incidents relative to the rest of the city. Each of the six streets intersecting at Sunburst Plaza (15th Street, Maryland Avenue, H Street, Florida Avenue, Bladensburg Avenue, and Benning Road) is a census tract boundary. As a result, the overall high number of incidents in this area is divided between seven census tracts, masking what was visible in the individual incident and neighborhood layers.
 
-![Census Tracts](../blob/master/images/starburst_3.png?raw=true "Census Tracts")
+![Census Tracts](https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/images/starburst_3.png "Census Tracts")
 <br>
 
 ## Geolocation
