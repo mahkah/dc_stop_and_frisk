@@ -737,7 +737,6 @@
           shortSetIndex = i;
         }
       }
-      // let shortSetIndex = sets.reduce(function(minI,el,i,arr) {return el.size<arr[minI].size ? i : minI;}, 0);
       let shortSet = sets.splice(shortSetIndex, 1);
       let count = sets.length;
       let result = new Set(shortSet[0]);
