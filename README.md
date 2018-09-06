@@ -1,5 +1,5 @@
 # DC Stop and Frisk Map
-This project maps the forcible and non-forcible stops conducted by the DC Metropolitan Police Department (MPD) from 2010 to 2017. While this data was collected and released by the MPD, the MPD remains non-compliant with the stop and frisk data reporting requirements mandated by the Neighborhood Engagement Achieves Results (NEAR) Act of 2016.
+This project maps the forcible and non-forcible stops conducted by the DC Metropolitan Police Department (MPD) from 2010 to 2017. While this data was collected and released by the MPD, the MPD is currently non-compliant with the stop and frisk data reporting requirements mandated by the Neighborhood Engagement Achieves Results (NEAR) Act of 2016.
 
 View the map [here](https://rawgit.com/mahkah/dc_stop_and_frisk/master/index.html "DC Stop and Frisk Map").
 
@@ -22,7 +22,7 @@ When utilizing the map, viewers should be aware that some geographic regions bis
 ![Stop and Frisk Incidents](https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/images/starburst_1.png "Stop and Frisk Incidents")
 <br>
 
-The neighborhood clusters centered around Starburst Plaza, those containing Trinidad and Kingman Park present a similar story. They have among the highest stop and frisk incident counts of all DC neighborhoods.
+The neighborhood clusters centered around Starburst Plaza, those containing Trinidad and Kingman Park, present a similar story. They have among the highest stop and frisk incident counts of all DC neighborhoods.
 
 ![Neighborhoods](https://raw.githubusercontent.com/mahkah/dc_stop_and_frisk/master/images/starburst_2.png "Neighborhoods")
 <br>
@@ -42,16 +42,13 @@ Finally, the city's block dataset (retrieved March 21, 2018) appears to omit the
 Overall, ~96% of forcible and ~82% of non-forcible incidents provided by MPD were successfully matched to a latitude and longitude. The remaining addresses were either missing, incorrect, or not specific enough to be matched.
 
 ## Implementation of Dynamic Choropleth Map Filtering
-The type and kind of map layers implemented in Mapbox GL JS has outstripped the implementation of filter expressions. As a result, the cluster and choropleth layers modify the mapbox source object and asynchronously re-render the map layer when a filter is updated. For the cluster layer, this is a relatively straightforward and only requires applying a function that returns true for filtered incidents to the source data. Implementing this filtering for choropleth layers was more involved and an explanation could not be found elsewhere online, so it is discussed here.
+The type and kind of map layers implemented in Mapbox GL JS has outstripped the implementation of filter expressions. As a result, the cluster and choropleth layers modify the mapbox source object and asynchronously re-render the map layer when a filter is updated. For the cluster layer, this is a relatively straightforward and only requires applying a function that returns true for filtered incidents to the source data. Implementing this filtering for choropleth layers was more involved, and an explanation could not be found elsewhere online. As a result, one solution is discussed here.
 
-The collect module from Turf.js was used to collect features from the incidents that occurred in each polygon into arrays. An array was created for every region and dimension filters operate along, such that within region, indexes of each dimension array correspond to the same incident. Specifically:
-
+The collect module from Turf.js was used to collect features from the incidents that occurred in each polygon into arrays. An array was created for every region and dimension that filters operate along such that, within region, indexes of each dimension array correspond to the same incident. Specifically, the following code was run for combination of filterField[n] and polygonGeojson:
 ```javascript
 var collectedGeojson = turf.collect(polygonGeojson, incidentGeojson, filterField[0], filterField[0])
 ```
-
 When the user updates a filter, a set is created for each region containing all indexes of incidents that fulfill the filter's requirements. When applying multiple data filters, the cardinality of the intersection of these sets is the number of filtered incidents in each region. [Blindman67](https://stackoverflow.com/questions/42604185/get-the-intersection-of-n-arrays) provided an efficient method for taking the intersect of n-sets that was adapted for use here:
-
 ```javascript
 function intersect(sets) {
   let minSize = sets[0].size;
@@ -79,3 +76,4 @@ function intersect(sets) {
   return result;
 }
 ```
+Once the number of filtered incidents has been computed, adding it to the map layer's geojson source allows it be used in Mapbox expressions. Here, the `fill-color` paint property is styled according to the filtered incident count. This process scales well with the number of filters, as the time neccesary to intersect subsequent sets decreases monotonically. If the number of data points or choropleth layers must be scaled, keeping track of feature properties in the data point geojson, rather than the polygon layer geojsons, is recommended. 
