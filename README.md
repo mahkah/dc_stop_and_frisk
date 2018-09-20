@@ -3,7 +3,7 @@ This project maps the forcible and non-forcible stops conducted by the DC Metrop
 
 View the map [here](https://rawgit.com/mahkah/dc_stop_and_frisk/master/index.html "DC Stop and Frisk Map").
 
-Read an analysis [here](https://github.com/mahkah/dc_stop_and_frisk/tree/master "Racial Inequity and D.C. Stop and Frisk").
+Read an analysis [here](https://gwarrenn.github.io/Stop-and-Frisk-DC/ "Racial Inequity and D.C. Stop and Frisk").
 
 ## File Inventory
 |**File**|**Description**
